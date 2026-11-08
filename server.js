@@ -513,7 +513,7 @@ app.post("/telegram-webhook", async (req, res) => {
         `👤 <b>Admin Support፦</b> @Aropc\n` +
         `📢 <b>Channel፦</b> @Unique_techs\n` +
         `📸 <b>Proof Channel፦</b> @Ut_proof\n\n` +
-        `⏰ <b>የስራ ሰዓት፦ <i>24/7 ሁልጊዜ አለን</i>!`;
+        `⏰ <b>የስራ ሰዓት</b>፦ <i>24/7 ሁልጊዜ አለን</i>!`;
 
       await telegram("sendMessage", {
         method: "POST",
