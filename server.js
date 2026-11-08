@@ -111,9 +111,9 @@ let exchangeRates = { tier1: 178, tier2: 180, tier3: 182, tier4: 185 };
 
 async function initRates() {
   try {
-    let savedRate = await Rate.findOne({ key: "current_rates" });
+    let savedRate = await Rate.findOne({ key: "v2_rates" });
     if (!savedRate) {
-      savedRate = await Rate.create({ key: "current_rates", tier1: 178, tier2: 180, tier3: 182, tier4: 185 });
+      savedRate = await Rate.create({ key: "v2_rates", tier1: 178, tier2: 180, tier3: 182, tier4: 185 });
     }
     exchangeRates = { tier1: savedRate.tier1, tier2: savedRate.tier2, tier3: savedRate.tier3, tier4: savedRate.tier4 };
   } catch (err) {
@@ -347,7 +347,7 @@ app.post("/telegram-webhook", async (req, res) => {
 
     if (text.startsWith("/pause")) {
       const reason = text.replace("/pause", "").trim() || "ቦቱ ለአጭር ጊዜ ጥገና ቆሟል።";
-      await Settings.findOneAndUpdate({ key: "global_settings" }, { isPaused: true, pauseReason: reason }, { upsert: true });
+      await Settings.findOneAndUpdate({ key: "v2_settings" }, { isPaused: true, pauseReason: reason }, { upsert: true });
       await telegram("sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -357,7 +357,7 @@ app.post("/telegram-webhook", async (req, res) => {
     }
 
     if (text === "/resume") {
-      await Settings.findOneAndUpdate({ key: "global_settings" }, { isPaused: false }, { upsert: true });
+      await Settings.findOneAndUpdate({ key: "v2_settings" }, { isPaused: false }, { upsert: true });
       await telegram("sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -370,7 +370,7 @@ app.post("/telegram-webhook", async (req, res) => {
       const p = text.split(" ").filter(x => x.trim() !== "");
       if (p[1] && p[2] && p[3] && p[4]) {
         exchangeRates = { tier1: Number(p[1]), tier2: Number(p[2]), tier3: Number(p[3]), tier4: Number(p[4]) };
-        await Rate.findOneAndUpdate({ key: "current_rates" }, exchangeRates, { upsert: true });
+        await Rate.findOneAndUpdate({ key: "v2_rates" }, exchangeRates, { upsert: true });
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -432,8 +432,8 @@ app.post("/telegram-webhook", async (req, res) => {
       await user.save();
 
       const welcomeText = 
-        `👋 <b>እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!</b>\n\n` +
-        `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n\n` +
+        `👋 <b>እንኳን ወደ Unique P2P Store በደህና መጡ!</b> 🇪🇹\n━━━━━━━━━━━━━━━━━━\n` +
+        `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n` +
         `⏰ <b>የስራ ሰዓት፦</b> ከጠዋቱ 1:00 - ማታ 3:00\n\n` +
         `👇 <b>ለመገበያየት ከስር ያሉትን አዝራሮች ይጠቀሙ፦</b>`;
 
@@ -509,11 +509,11 @@ app.post("/telegram-webhook", async (req, res) => {
       const supportText = 
         `📞 <b>የደንበኞች ድጋፍ እና ማህበረሰብ</b>\n` +
         `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `👉 <b>ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-</b>\n\n` +
-        `👤 <b>Admin Support</b>፦ @Aropc\n` +
-        `📢 <b>Channel</b>: @Unique_techs\n` +
-        `📸 <b>Proof Channel</b>: @Ut_proof\n\n` +
-        `⏰ <b>የስራ ሰዓት፦ 24/7 ሁልጊዜ አለን</b>!`;
+        `👉 ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-\n\n` +
+        `👤 <b>Admin Support፦</b> @Aropc\n` +
+        `📢 <b>Channel:</b> @Unique_techs\n` +
+        `📸 <b>Proof Channel:</b> @Ut_proof\n\n` +
+        `⏰ <b>የስራ ሰዓት፦</b> 24/7 ሁልጊዜ አለን!`;
 
       await telegram("sendMessage", {
         method: "POST",
@@ -528,7 +528,7 @@ app.post("/telegram-webhook", async (req, res) => {
     }
 
     if (text === "💵 USDT መሸጥ") {
-      const botSettings = await Settings.findOne({ key: "global_settings" });
+      const botSettings = await Settings.findOne({ key: "v2_settings" });
       if (botSettings && botSettings.isPaused) {
         await telegram("sendMessage", {
           method: "POST",
