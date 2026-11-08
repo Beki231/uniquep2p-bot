@@ -432,8 +432,8 @@ app.post("/telegram-webhook", async (req, res) => {
       await user.save();
 
       const welcomeText = 
-        `👋 <b>እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!</b>
-        `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n\n` +
+        `👋 <b>እንኳን ወደ Unique P2P Store በደህና መጡ!</b> 🇪🇹\n━━━━━━━━━━━━━━━━━━\n` +
+        `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n` +
         `⏰ <b>የስራ ሰዓት፦</b> ከጠዋቱ 1:00 - ማታ 3:00\n\n` +
         `👇 <b>ለመገበያየት ከስር ያሉትን አዝራሮች ይጠቀሙ፦</b>`;
 
