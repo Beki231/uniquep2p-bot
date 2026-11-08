@@ -432,8 +432,8 @@ app.post("/telegram-webhook", async (req, res) => {
       await user.save();
 
       const welcomeText = 
-        `👋 <b>እንኳን ወደ Unique P2P Store በደህና መጡ!</b> 🇪🇹\n━━━━━━━━━━━━━━━━━━\n` +
-        `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n` +
+        `👋 <b>እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!</b>\n\n` +
+        `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n\n` +
         `⏰ <b>የስራ ሰዓት፦</b> ከጠዋቱ 1:00 - ማታ 3:00\n\n` +
         `👇 <b>ለመገበያየት ከስር ያሉትን አዝራሮች ይጠቀሙ፦</b>`;
 
@@ -509,11 +509,11 @@ app.post("/telegram-webhook", async (req, res) => {
       const supportText = 
         `📞 <b>የደንበኞች ድጋፍ እና ማህበረሰብ</b>\n` +
         `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `👉 ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-\n\n` +
+        `👉 <b>ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-</b>\n\n` +
         `👤 <b>Admin Support፦</b> @Aropc\n` +
-        `📢 <b>Channel:</b> @Unique_techs\n` +
-        `📸 <b>Proof Channel:</b> @Ut_proof\n\n` +
-        `⏰ <b>የስራ ሰዓት፦</b> 24/7 ሁልጊዜ አለን!`;
+        `📢 <b>Channel፦</b> @Unique_techs\n` +
+        `📸 <b>Proof Channel፦</b> @Ut_proof\n\n` +
+        `⏰ <b>የስራ ሰዓት፦ <i>24/7 ሁልጊዜ አለን</i>!`;
 
       await telegram("sendMessage", {
         method: "POST",
