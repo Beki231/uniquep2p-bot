@@ -432,7 +432,7 @@ app.post("/telegram-webhook", async (req, res) => {
       await user.save();
 
       const welcomeText = 
-        `👋 <b>እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!</b>\n` +
+        `👋 <b>እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!</b>\n\n` +
         `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n\n` +
         `⏰ <b>የስራ ሰዓት፦</b> ከጠዋቱ 1:00 - ማታ 3:00\n\n` +
         `👇 <b>ለመገበያየት ከስር ያሉትን አዝራሮች ይጠቀሙ፦</b>`;
@@ -509,11 +509,11 @@ app.post("/telegram-webhook", async (req, res) => {
       const supportText = 
         `📞 <b>የደንበኞች ድጋፍ እና ማህበረሰብ</b>\n` +
         `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `👉 ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-\n\n` +
-        `👤 Admin Support፦ @Aropc\n` +
-        `📢 Channel: @Unique_techs\n` +
-        `📸 Proof Channel: @Ut_proof\n\n` +
-        `⏰ የስራ ሰዓት፦ 24/7 ሁልጊዜ አለን!`;
+        `👉 <b>ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-</b>\n\n` +
+        `👤 <b>Admin Support</b>፦ @Aropc\n` +
+        `📢 <b>Channel</b>: @Unique_techs\n` +
+        `📸 <b>Proof Channel</b>: @Ut_proof\n\n` +
+        `⏰ <b>የስራ ሰዓት፦ 24/7 ሁልጊዜ አለን</b>!`;
 
       await telegram("sendMessage", {
         method: "POST",
@@ -586,7 +586,7 @@ app.post("/telegram-webhook", async (req, res) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: userId,
-          text: `📊 <b>መጠን:</b> ${amt} USDT\n📈 <b>ተመን:</b> 1 USDT = ${rate} ETB\n💰 <b>የሚቀበሉት ድምር:</b> <b>${total.toLocaleString()} ETB</b>\n\n👇 <b>ክሪፕቶ የሚልኩበትን ኔትወርክ ይምረጡ፦</b>`,
+          text: `📊 <b>መጠን:</b> ${amt} USDT\n📈 <b>ተመን:</b> 1 USDT = ${rate} ETB\n💰 <b>የሚቀበሉት ድምር:</b> <b>${total.toLocaleString()} ETB</b>\n\n👇 <b>USDT የሚልኩበትን ኔትወርክ ይምረጡ፦</b>`,
           parse_mode: "HTML",
           reply_markup: netKeyboard
         })
