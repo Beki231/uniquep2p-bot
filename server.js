@@ -568,12 +568,19 @@ app.post("/telegram-webhook", async (req, res) => {
     }
 
     if (text === "🛒 USDT መግዛት") {
+      const buyText =
+        `🛒 <b>USDT መግዛት</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━\n` +
+        `📖 <i>ይህ አገልግሎት በቅርቡ ይጀምራል፤ ዝግጅቱን እያጠናቀቅን ነው።\n\n` +
+        `አገልግሎቱ ክፍት ሲሆን ወዲያውኑ ማሳወቂያ ይደርሳችኋል። እባክዎ በትዕግስት ይጠብቁን!</i>\n` +
+        `━━━━━━━━━━━━━━━━━━━━`;
+
       await telegram("sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: userId,
-          text: `🛒 <b>USDT መግዛት ይፈልጋሉ?</b>\n\nበቀጥታ አድሚን በማነጋገር በደቂቃዎች ውስጥ መግዛት ይችላሉ፦\n👉 @Aropc`,
+          text: buyText,
           parse_mode: "HTML"
         })
       });
@@ -613,7 +620,7 @@ app.post("/telegram-webhook", async (req, res) => {
         `👤 <b>Admin Support፦</b> @Aropc\n` +
         `📢 <b>Channel፦</b> @Unique_techs\n` +
         `📸 <b>Proof Channel፦</b> @Ut_proof\n\n` +
-        `⏰ <b>የስራ ሰዓት፦ 24/7 ሁልጊዜ አለን!</b>`;
+        `⏰ <b>የስራ ሰዓት</b>፦ <i>24/7 ሁልጊዜ አለን!</i>`;
 
       await telegram("sendMessage", {
         method: "POST",
