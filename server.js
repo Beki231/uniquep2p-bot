@@ -19,7 +19,7 @@ const PROOF_CHANNEL_ID = "@Ut_proof";
 const BANNER_IMAGE_URL = "https://i.postimg.cc/L88G59b1/IMG-20261103-102834-245.jpg"; 
 const STATS_BANNER_URL = "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=80";
 
-// Schemas
+// Schemas (ለብቻው በራሱ Collection እንዲቀመጥ v2_users እና v2_orders ተሰጥቶታል)
 const UserSchema = new mongoose.Schema({
   telegramId: { type: Number, required: true, unique: true },
   username: { type: String, default: "" },
@@ -61,8 +61,8 @@ const RateSchema = new mongoose.Schema({
   tier4: { type: Number, default: 185 }
 });
 
-const User = mongoose.model("User", UserSchema);
-const Order = mongoose.model("Order", OrderSchema);
+const User = mongoose.model("V2_User", UserSchema);
+const Order = mongoose.model("V2_Order", OrderSchema);
 const Settings = mongoose.model("Settings", SettingsSchema);
 const Rate = mongoose.model("Rate", RateSchema);
 
@@ -319,6 +319,99 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
+    // /daily - የዛሬ ትዕዛዞች እና የገንዘብ መጠን
+    if (text === "/daily") {
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const approvedOrdersToday = await Order.find({ status: "approved", createdAt: { $gte: startOfDay } });
+
+      const count = approvedOrdersToday.length;
+      const totalUSDT = approvedOrdersToday.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
+      const totalETB = approvedOrdersToday.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+      const dailyMsg =
+        `📅 <b>የዛሬ ዕለታዊ ሪፖርት (Daily Summary)</b>\n━━━━━━━━━━━━━━━━━━\n` +
+        `✅ <b>የተጠናቀቁ ትዕዛዞች:</b> ${count}\n` +
+        `💵 <b>ጠቅላላ የተሸጠ USDT:</b> ${totalUSDT.toFixed(2)} USDT\n` +
+        `💰 <b>የተከፈለ ብር:</b> ${totalETB.toLocaleString()} ETB\n━━━━━━━━━━━━━━━━━━`;
+
+      await telegram("sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: msg.chat.id, text: dailyMsg, parse_mode: "HTML" })
+      });
+      return;
+    }
+
+    // /broadcast - ለሁሉም የቦቱ ተጠቃሚዎች መልእክት መላኪያ
+    if (text.startsWith("/broadcast ")) {
+      const broadcastMsg = text.replace("/broadcast ", "").trim();
+      if (!broadcastMsg) return;
+
+      const allUsers = await User.find({}, "telegramId");
+      let successCount = 0;
+
+      await telegram("sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: msg.chat.id, text: `📢 መልእክት ለ ${allUsers.length} ተጠቃሚዎች እየተላከ ነው...` })
+      });
+
+      for (const u of allUsers) {
+        try {
+          await telegram("sendMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: u.telegramId, text: broadcastMsg, parse_mode: "HTML" })
+          });
+          successCount++;
+        } catch (e) {}
+      }
+
+      await telegram("sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: msg.chat.id, text: `✅ ብሮድካስት ተጠናቋል! ለ ${successCount} ተጠቃሚዎች ደርሷል።` })
+      });
+      return;
+    }
+
+    // /send <user_id> <message> - ለአንድ ሰው ብቻ መላኪያ
+    if (text.startsWith("/send ")) {
+      const parts = text.split(" ");
+      const targetId = parts[1];
+      const directMsg = parts.slice(2).join(" ").trim();
+
+      if (!targetId || !directMsg) {
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: msg.chat.id, text: "⚠️ አጠቃቀም፦ <code>/send &lt;user_id&gt; &lt;መልእክት&gt;</code>", parse_mode: "HTML" })
+        });
+        return;
+      }
+
+      try {
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: targetId, text: `📩 <b>ከአድሚን የተላከ መልእክት፦</b>\n\n${directMsg}`, parse_mode: "HTML" })
+        });
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: msg.chat.id, text: `✅ መልእክቱ ለ <code>${targetId}</code> ተልኳል!`, parse_mode: "HTML" })
+        });
+      } catch (err) {
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: msg.chat.id, text: `❌ መልእክቱን መላክ አልተቻለም። ተጠቃሚው ቦቱን ዘግቶት ሊሆን ይችላል።` })
+        });
+      }
+      return;
+    }
+
     if (text.startsWith("/ban ")) {
       const targetId = Number(text.split(" ")[1]);
       if (targetId) {
@@ -374,7 +467,14 @@ app.post("/telegram-webhook", async (req, res) => {
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: msg.chat.id, text: `✅ ተመኖች ተቀይረዋል!` })
+          body: JSON.stringify({ chat_id: msg.chat.id, text: `✅ ተመኖች ተቀይረዋል!\n\n1: ${exchangeRates.tier1} ETB\n2: ${exchangeRates.tier2} ETB\n3: ${exchangeRates.tier3} ETB\n4: ${exchangeRates.tier4} ETB` })
+        });
+        return;
+      } else {
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: msg.chat.id, text: "⚠️ አጠቃቀም፦ <code>/setrates 178 180 182 185</code>", parse_mode: "HTML" })
         });
         return;
       }
@@ -432,8 +532,8 @@ app.post("/telegram-webhook", async (req, res) => {
       await user.save();
 
       const welcomeText = 
-        `👋 <b>እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!</b>\n\n` +
-        `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n\n` +
+        `👋 <b>እንኳን ወደ Unique P2P Store በደህና መጡ!</b> 🇪🇹\n━━━━━━━━━━━━━━━━━━\n` +
+        `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n` +
         `⏰ <b>የስራ ሰዓት፦</b> ከጠዋቱ 1:00 - ማታ 3:00\n\n` +
         `👇 <b>ለመገበያየት ከስር ያሉትን አዝራሮች ይጠቀሙ፦</b>`;
 
@@ -509,11 +609,11 @@ app.post("/telegram-webhook", async (req, res) => {
       const supportText = 
         `📞 <b>የደንበኞች ድጋፍ እና ማህበረሰብ</b>\n` +
         `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `👉 <b>ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-</b>\n\n` +
+        `👉 ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-\n\n` +
         `👤 <b>Admin Support፦</b> @Aropc\n` +
-        `📢 <b>Channel፦</b> @Unique_techs\n` +
-        `📸 <b>Proof Channel፦</b> @Ut_proof\n\n` +
-        `⏰ <b>የስራ ሰዓት</b>፦ <i>24/7 ሁልጊዜ አለን</i>!`;
+        `📢 <b>Channel:</b> @Unique_techs\n` +
+        `📸 <b>Proof Channel:</b> @Ut_proof\n\n` +
+        `⏰ <b>የስራ ሰዓት፦</b> 24/7 ሁልጊዜ አለን!`;
 
       await telegram("sendMessage", {
         method: "POST",
@@ -534,6 +634,15 @@ app.post("/telegram-webhook", async (req, res) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chat_id: userId, text: botSettings.pauseReason || "⏸️ ቦቱ ለጊዜው ቆሟል።" })
+        });
+        return;
+      }
+
+      if (!isStoreOpen()) {
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: userId, text: "⏰ የስራ ሰዓታችን ከጠዋቱ 1:00 እስከ ማታ 3:00 ነው። እባክዎ በስራ ሰዓት ይጠቀሙ!" })
         });
         return;
       }
@@ -586,7 +695,7 @@ app.post("/telegram-webhook", async (req, res) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: userId,
-          text: `📊 <b>መጠን:</b> ${amt} USDT\n📈 <b>ተመን:</b> 1 USDT = ${rate} ETB\n💰 <b>የሚቀበሉት ድምር:</b> <b>${total.toLocaleString()} ETB</b>\n\n👇 <b>USDT የሚልኩበትን ኔትወርክ ይምረጡ፦</b>`,
+          text: `📊 <b>መጠን:</b> ${amt} USDT\n📈 <b>ተመን:</b> 1 USDT = ${rate} ETB\n💰 <b>የሚቀበሉት ድምር:</b> <b>${total.toLocaleString()} ETB</b>\n\n👇 <b>ክሪፕቶ የሚልኩበትን ኔትወርክ ይምረጡ፦</b>`,
           parse_mode: "HTML",
           reply_markup: netKeyboard
         })
