@@ -22,8 +22,8 @@ const STATS_BANNER_URL = "https://images.unsplash.com/photo-1611974789855-9c2a0a
 // Schemas
 const UserSchema = new mongoose.Schema({
   telegramId: { type: Number, required: true, unique: true },
-  username: String,
-  firstName: String,
+  username: { type: String, default: "" },
+  firstName: { type: String, default: "" },
   isBanned: { type: Boolean, default: false },
   step: { type: String, default: "idle" },
   tempOrder: { type: Object, default: {} },
@@ -33,14 +33,14 @@ const UserSchema = new mongoose.Schema({
 const OrderSchema = new mongoose.Schema({
   orderId: { type: String, required: true, unique: true },
   userId: { type: Number, required: true },
-  userName: String,
-  telegramUsername: String,
-  amount: { type: Number, required: true },
-  total: { type: Number, required: true },
-  rate: Number,
-  account: { type: String, required: true },
-  method: { type: String, required: true },
-  network: String,
+  userName: { type: String, default: "" },
+  telegramUsername: { type: String, default: "" },
+  amount: { type: Number, default: 0 },
+  total: { type: Number, default: 0 },
+  rate: { type: Number, default: 0 },
+  account: { type: String, default: "N/A" },
+  method: { type: String, default: "N/A" },
+  network: { type: String, default: "N/A" },
   status: { type: String, enum: ["pending", "approved", "declined"], default: "pending" },
   customerProofFileId: String,
   receiptFileId: String,
@@ -112,7 +112,7 @@ function getRate(amount) {
 }
 
 function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
+  return String(value || "").replace(/[&<>"']/g, char => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char]);
 }
@@ -184,7 +184,7 @@ app.post("/telegram-webhook", async (req, res) => {
         const userMsg = 
           `✅ <b>የትዕዛዝ ማረጋገጫ እና ደረሰኝ፦</b>\n\n` +
           `የ <b>${order.amount} USDT</b> ሽያጭ ትዕዛዝዎ ጸድቋል!\n` +
-          `💰 <b>${order.total.toLocaleString()} ETB</b> ወደ ${order.method} አካውንትዎ ገቢ ተደርጓል።\n\n` +
+          `💰 <b>${Number(order.total || 0).toLocaleString()} ETB</b> ወደ ${order.method} አካውንትዎ ገቢ ተደርጓል።\n\n` +
           `👆 <i>የተከፈለበት ደረሰኝ ከላይ ተያይዟል። ከ Unique P2P ጋር ስለሰሩ እናመሰግናለን! 🙏</i>`;
 
         await telegram("sendPhoto", {
@@ -201,7 +201,7 @@ app.post("/telegram-webhook", async (req, res) => {
             `━━━━━━━━━━━━━━━━━━\n` +
             `👤 <b>ደንበኛ:</b> ${maskedName}\n` +
             `💵 <b>የተሸጠው USDT:</b> ${order.amount} USDT\n` +
-            `💰 <b>የተከፈለው ብር:</b> ${order.total.toLocaleString()} ETB\n` +
+            `💰 <b>የተከፈለው ብር:</b> ${Number(order.total || 0).toLocaleString()} ETB\n` +
             `🏦 <b>የክፍያ መንገድ:</b> ${order.method}\n` +
             `━━━━━━━━━━━━━━━━━━\n` +
             `⚡ <i>ደህንነቱ የተጠበቀ ፈጣን P2P ንግድ በ @Unique_techs</i>`;
@@ -294,7 +294,7 @@ app.post("/telegram-webhook", async (req, res) => {
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: msg.chat.id, text: `🚫 ተጠቃሚ <code>${targetId}</code> ታግዷል!` , parse_mode: "HTML" })
+          body: JSON.stringify({ chat_id: msg.chat.id, text: `🚫 ተጠቃሚ <code>${targetId}</code> ታግዷል!`, parse_mode: "HTML" })
         });
         return;
       }
@@ -307,7 +307,7 @@ app.post("/telegram-webhook", async (req, res) => {
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: msg.chat.id, text: `✅ ተጠቃሚ <code>${targetId}</code> ተነስቷል!` , parse_mode: "HTML" })
+          body: JSON.stringify({ chat_id: msg.chat.id, text: `✅ ተጠቃሚ <code>${targetId}</code> ተነስቷል!`, parse_mode: "HTML" })
         });
         return;
       }
@@ -366,8 +366,8 @@ app.post("/telegram-webhook", async (req, res) => {
     if (!user) {
       user = await User.create({
         telegramId: userId,
-        username: msg.from.username,
-        firstName: msg.from.first_name,
+        username: msg.from.username || "",
+        firstName: msg.from.first_name || "",
         step: "idle"
       });
     }
@@ -462,7 +462,7 @@ app.post("/telegram-webhook", async (req, res) => {
       let historyText = `📜 <b>የቅርብ ጊዜ የትዕዛዝ ታሪክዎ፦</b>\n━━━━━━━━━━━━━━━━━━\n`;
       orders.forEach(o => {
         const statusEmoji = o.status === "approved" ? "✅ ጸድቋል" : o.status === "declined" ? "❌ ውድቅ" : "⏳ በሂደት";
-        historyText += `💵 <b>${o.amount} USDT</b> (${Number(o.total).toLocaleString()} ETB)\n🏦 ዘዴ: ${o.method} | ሁኔታ: <b>${statusEmoji}</b>\n━━━━━━━━━━━━━━━━━━\n`;
+        historyText += `💵 <b>${o.amount} USDT</b> (${Number(o.total || 0).toLocaleString()} ETB)\n🏦 ዘዴ: ${o.method} | ሁኔታ: <b>${statusEmoji}</b>\n━━━━━━━━━━━━━━━━━━\n`;
       });
 
       await telegram("sendMessage", {
@@ -566,7 +566,7 @@ app.post("/telegram-webhook", async (req, res) => {
     // ደረጃ 2፦ አካውንት ቁጥር
     if (user.step === "awaiting_account") {
       const cleanAcc = text.replace(/\s+/g, '');
-      const method = user.tempOrder.method;
+      const method = (user.tempOrder && user.tempOrder.method) || "Telebirr";
 
       if (method === "Telebirr" && !/^09\d{8}$/.test(cleanAcc)) {
         await telegram("sendMessage", {
@@ -585,7 +585,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      user.tempOrder.account = cleanAcc;
+      user.tempOrder = { ...(user.tempOrder || {}), account: cleanAcc };
       user.step = "awaiting_name";
       await user.save();
 
@@ -608,7 +608,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      user.tempOrder.name = text;
+      user.tempOrder = { ...(user.tempOrder || {}), name: text };
       user.step = "awaiting_screenshot";
       await user.save();
 
@@ -637,74 +637,83 @@ app.post("/telegram-webhook", async (req, res) => {
 
       const fileId = msg.photo[msg.photo.length - 1].file_id;
       const orderId = crypto.randomUUID();
-      const orderData = user.tempOrder;
+      const orderData = user.tempOrder || {};
 
-      await Order.create({
-        orderId,
-        userId,
-        userName: orderData.name,
-        telegramUsername: msg.from.username || "",
-        amount: orderData.amount,
-        total: orderData.total,
-        rate: orderData.rate,
-        account: orderData.account,
-        method: orderData.method,
-        network: orderData.networkName,
-        customerProofFileId: fileId,
-        status: "pending"
-      });
+      try {
+        await Order.create({
+          orderId,
+          userId,
+          userName: orderData.name || msg.from.first_name || "ደንበኛ",
+          telegramUsername: msg.from.username || "",
+          amount: Number(orderData.amount) || 0,
+          total: Number(orderData.total) || 0,
+          rate: Number(orderData.rate) || 0,
+          account: orderData.account || "N/A",
+          method: orderData.method || "N/A",
+          network: orderData.networkName || "N/A",
+          customerProofFileId: fileId,
+          status: "pending"
+        });
 
-      user.step = "idle";
-      user.tempOrder = {};
-      await user.save();
+        user.step = "idle";
+        user.tempOrder = {};
+        await user.save();
 
-      await telegram("sendMessage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: userId,
-          text: `🎉 <b>ትዕዛዝዎ በተሳካ ሁኔታ ደርሷል!</b>\n━━━━━━━━━━━━━━━━━━\n🆔 <b>Order:</b> <code>${orderId}</code>\n💵 <b>መጠን:</b> ${orderData.amount} USDT\n💰 <b>የሚከፈለው:</b> ${orderData.total.toLocaleString()} ETB\n🏦 <b>ወደ:</b> ${orderData.method} (<code>${orderData.account}</code>)\n\n<i>አድሚኑ ደረሰኙን አረጋግጦ ክፍያውን ወዲያውኑ ገቢ ያደርጋል!</i>`,
-          parse_mode: "HTML",
-          reply_markup: mainMenuKeyboard
-        })
-      });
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: userId,
+            text: `🎉 <b>ትዕዛዝዎ በተሳካ ሁኔታ ደርሷል!</b>\n━━━━━━━━━━━━━━━━━━\n🆔 <b>Order:</b> <code>${orderId}</code>\n💵 <b>መጠን:</b> ${orderData.amount || 0} USDT\n💰 <b>የሚከፈለው:</b> ${(Number(orderData.total) || 0).toLocaleString()} ETB\n🏦 <b>ወደ:</b> ${orderData.method || ""} (<code>${orderData.account || ""}</code>)\n\n<i>አድሚኑ ደረሰኙን አረጋግጦ ክፍያውን ወዲያውኑ ገቢ ያደርጋል!</i>`,
+            parse_mode: "HTML",
+            reply_markup: mainMenuKeyboard
+          })
+        });
 
-      const adminCaption =
-        `🚨 <b>አዲስ P2P ትዕዛዝ (Normal Bot)</b>\n━━━━━━━━━━━━━━━━━━\n` +
-        `👤 <b>ስም:</b> ${escapeHTML(orderData.name)} (@${msg.from.username || "የለውም"})\n` +
-        `🆔 <b>User ID:</b> <code>${userId}</code>\n` +
-        `💵 <b>USDT:</b> ${orderData.amount}\n` +
-        `📈 <b>Rate:</b> ${orderData.rate} ETB\n` +
-        `💰 <b>Total:</b> ${orderData.total.toLocaleString()} ETB\n` +
-        `🌐 <b>Network:</b> ${orderData.networkName}\n` +
-        `🏦 <b>Method:</b> ${orderData.method}\n` +
-        `📱 <b>Account:</b> <code>${escapeHTML(orderData.account)}</code>\n━━━━━━━━━━━━━━━━━━\n` +
-        `🆔 <b>Order:</b> <code>${orderId}</code>`;
+        const adminCaption =
+          `🚨 <b>አዲስ P2P ትዕዛዝ (Normal Bot)</b>\n━━━━━━━━━━━━━━━━━━\n` +
+          `👤 <b>ስም:</b> ${escapeHTML(orderData.name || msg.from.first_name || "ደንበኛ")} (@${msg.from.username || "የለውም"})\n` +
+          `🆔 <b>User ID:</b> <code>${userId}</code>\n` +
+          `💵 <b>USDT:</b> ${orderData.amount || 0}\n` +
+          `📈 <b>Rate:</b> ${orderData.rate || 0} ETB\n` +
+          `💰 <b>Total:</b> ${(Number(orderData.total) || 0).toLocaleString()} ETB\n` +
+          `🌐 <b>Network:</b> ${orderData.networkName || "N/A"}\n` +
+          `🏦 <b>Method:</b> ${orderData.method || "N/A"}\n` +
+          `📱 <b>Account:</b> <code>${escapeHTML(orderData.account || "")}</code>\n━━━━━━━━━━━━━━━━━━\n` +
+          `🆔 <b>Order:</b> <code>${orderId}</code>`;
 
-      const adminKeyboard = {
-        inline_keyboard: [
-          [
-            { text: "📸 ደረሰኝ ልከህ አጽድቅ", callback_data: `receipt:${orderId}` },
-            { text: "✅ Quick Approve", callback_data: `quick_approve:${orderId}` }
-          ],
-          [
-            { text: "❌ Decline", callback_data: `decline:${orderId}` },
-            { text: "🚫 Ban User", callback_data: `ban_user:${userId}` }
+        const adminKeyboard = {
+          inline_keyboard: [
+            [
+              { text: "📸 ደረሰኝ ልከህ አጽድቅ", callback_data: `receipt:${orderId}` },
+              { text: "✅ Quick Approve", callback_data: `quick_approve:${orderId}` }
+            ],
+            [
+              { text: "❌ Decline", callback_data: `decline:${orderId}` },
+              { text: "🚫 Ban User", callback_data: `ban_user:${userId}` }
+            ]
           ]
-        ]
-      };
+        };
 
-      await telegram("sendPhoto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: ADMIN_CHAT_ID,
-          photo: fileId,
-          caption: adminCaption,
-          parse_mode: "HTML",
-          reply_markup: adminKeyboard
-        })
-      });
+        await telegram("sendPhoto", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: ADMIN_CHAT_ID,
+            photo: fileId,
+            caption: adminCaption,
+            parse_mode: "HTML",
+            reply_markup: adminKeyboard
+          })
+        });
+      } catch (err) {
+        console.error("Order save error:", err);
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: userId, text: "⚠️ በትዕዛዝ ምዝገባ ወቅት ችግር አጋጥሟል። እባክዎ በ /start እንደገና ይሞክሩ።" })
+        });
+      }
       return;
     }
   }
@@ -731,8 +740,7 @@ app.post("/telegram-webhook", async (req, res) => {
 
       const user = await User.findOne({ telegramId: cbUserId });
       if (user && user.step === "awaiting_network") {
-        user.tempOrder.networkKey = netKey;
-        user.tempOrder.networkName = selectedNet.name;
+        user.tempOrder = { ...(user.tempOrder || {}), networkKey: netKey, networkName: selectedNet.name };
         user.step = "awaiting_method";
         await user.save();
 
@@ -769,7 +777,7 @@ app.post("/telegram-webhook", async (req, res) => {
       const user = await User.findOne({ telegramId: cbUserId });
 
       if (user && user.step === "awaiting_method") {
-        user.tempOrder.method = method;
+        user.tempOrder = { ...(user.tempOrder || {}), method: method };
         user.step = "awaiting_account";
         await user.save();
 
@@ -811,7 +819,7 @@ app.post("/telegram-webhook", async (req, res) => {
       if (action === "quick_approve") {
         order.status = "approved";
         await order.save();
-        await telegram("sendMessage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: order.userId, text: `✅ ትዕዛዝዎ ጸድቋል! ${order.total.toLocaleString()} ETB ተከፍሏል።` }) });
+        await telegram("sendMessage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: order.userId, text: `✅ ትዕዛዝዎ ጸድቋል! ${Number(order.total || 0).toLocaleString()} ETB ተከፍሏል።` }) });
         await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "Approved!" }) });
         return;
       }
