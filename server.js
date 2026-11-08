@@ -69,10 +69,42 @@ const Rate = mongoose.model("Rate", RateSchema);
 let pendingReceiptOrder = null;
 
 const cryptoNetworks = {
-  binance: { name: "Binance Pay UID", val: "1182277662 (UniqueTech)" },
-  bep20: { name: "BEP-20 (BSC)", val: "0xdc6bffaecee233cb3a1b41513349fd4cf842a486" },
-  ton: { name: "TON Network", val: "UQBnagfOnShZYOgwPOfCy5Jx5dr80D9p4laxNvORleI4YT9j" },
-  ltc: { name: "Litecoin (LTC)", val: "LMSESUBB5Ee9JschXusNrqKTQjMSr4d6sc" }
+  binance: {
+    name: "Binance Pay UID",
+    caption:
+      `🌐 <b>የመረጡት ኔትወርክ:</b> Binance Pay UID\n\n` +
+      `📬 <b>የመላኪያ አድራሻ:</b>👇\n\n` +
+      `🆔 <b>Binance UID :</b> <code>1182277662</code>\n` +
+      `👤 <b>Nickname :</b> <code>UniqueTech</code>\n\n` +
+      `👇 <b>USDT ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦</b>`
+  },
+  bep20: {
+    name: "BEP-20 (BSC)",
+    caption:
+      `🌐 <b>የመረጡት ኔትወርክ:</b> BEP-20 (BSC)\n\n` +
+      `📬 <b>የመላኪያ አድራሻ:</b>👇\n\n` +
+      `🪎 <b>Address :</b> <code>0xdc6bffaecee233cb3a1b41513349fd4cf842a486</code>\n\n` +
+      `👆 <i>Address በመንካት Copy አርጉ</i>\n\n` +
+      `👇 <b>USDT ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦</b>`
+  },
+  ton: {
+    name: "TON Network",
+    caption:
+      `🌐 <b>የመረጡት ኔትወርክ:</b> TON Network\n\n` +
+      `📬 <b>የመላኪያ አድራሻ:</b>👇\n\n` +
+      `🪎 <b>Address :</b> <code>UQBnagfOnShZYOgwPOfCy5Jx5dr80D9p4laxNvORleI4YT9j</code>\n\n` +
+      `👆 <i>Address በመንካት Copy አርጉ</i>\n\n` +
+      `👇 <b>ክሪፕቶውን ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦</b>`
+  },
+  ltc: {
+    name: "Litecoin (LTC)",
+    caption:
+      `🌐 <b>የመረጡት ኔትወርክ:</b> Litecoin (LTC)\n\n` +
+      `📬 <b>የመላኪያ አድራሻ:</b>👇\n\n` +
+      `🪎 <b>Address :</b> <code>LMSESUBB5Ee9JschXusNrqKTQjMSr4d6sc</code>\n\n` +
+      `👆 <i>Address በመንካት Copy አርጉ</i>\n\n` +
+      `👇 <b>ክሪፕቶውን ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦</b>`
+  }
 };
 
 let exchangeRates = { tier1: 178, tier2: 180, tier3: 182, tier4: 185 };
@@ -400,8 +432,8 @@ app.post("/telegram-webhook", async (req, res) => {
       await user.save();
 
       const welcomeText = 
-        `👋 <b>እንኳን ወደ Unique P2P Store በደህና መጡ!</b> 🇪🇹\n━━━━━━━━━━━━━━━━━━\n` +
-        `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n` +
+        `👋 <b>እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!</b>
+        `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n\n` +
         `⏰ <b>የስራ ሰዓት፦</b> ከጠዋቱ 1:00 - ማታ 3:00\n\n` +
         `👇 <b>ለመገበያየት ከስር ያሉትን አዝራሮች ይጠቀሙ፦</b>`;
 
@@ -474,14 +506,22 @@ app.post("/telegram-webhook", async (req, res) => {
     }
 
     if (text === "📞 ድጋፍ / አድሚን") {
+      const supportText = 
+        `📞 <b>የደንበኞች ድጋፍ እና ማህበረሰብ</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `👉 ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-\n\n` +
+        `👤 Admin Support፦ @Aropc\n` +
+        `📢 Channel: @Unique_techs\n` +
+        `📸 Proof Channel: @Ut_proof\n\n` +
+        `⏰ የስራ ሰዓት፦ 24/7 ሁልጊዜ አለን!`;
+
       await telegram("sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: userId,
-          text: `📞 <b>የደንበኞች ድጋፍ መስጫ፦</b>\n\n👨‍💻 አድሚን: @Aropc\n📢 ቻናል: @Unique_techs\n📸 ክፍያዎች ማረጋገጫ: @Ut_proof\n\n🎥 <a href="https://t.me/Unique_Techs/2814">የትዕዛዝ አደራረግ ቪዲዮ ለማየት ይጫኑ</a>`,
-          parse_mode: "HTML",
-          disable_web_page_preview: false
+          text: supportText,
+          parse_mode: "HTML"
         })
       });
       return;
@@ -498,15 +538,6 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      if (!isStoreOpen()) {
-        await telegram("sendMessage", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: userId, text: "⏰ የስራ ሰዓታችን ከጠዋቱ 1:00 እስከ ማታ 3:00 ነው። እባክዎ በስራ ሰዓት ይጠቀሙ!" })
-        });
-        return;
-      }
-
       user.step = "awaiting_amount";
       user.tempOrder = {};
       await user.save();
@@ -516,7 +547,7 @@ app.post("/telegram-webhook", async (req, res) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: userId,
-          text: `💵 <b>የሚሸጡትን የ USDT መጠን ያስገቡ፦</b>\n(ዝቅተኛው 0.5 USDT)\n\n<i>ለምሳሌ፦ 10</i>`,
+          text: `<b>💵 የሚሸጡትን የ USDT መጠን ያስገቡ፦</b>\n\n<i>ዝቅተኛው መጠን 0.5 USDT ነው</i>`,
           parse_mode: "HTML",
           reply_markup: { keyboard: [[{ text: "❌ ሰርዝ (Cancel)" }]], resize_keyboard: true }
         })
@@ -753,17 +784,12 @@ app.post("/telegram-webhook", async (req, res) => {
           ]
         };
 
-        const netMsg = 
-          `🌐 <b>የመረጡት ኔትወርክ:</b> ${selectedNet.name}\n` +
-          `📬 <b>የመላኪያ አድራሻ:</b>\n<code>${selectedNet.val}</code>\n(አድራሻውን ለመቅዳት ጽሑፉን ይጫኑት)\n\n` +
-          `👇 <b>ክሪፕቶውን ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦</b>`;
-
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: cbUserId,
-            text: netMsg,
+            text: selectedNet.caption,
             parse_mode: "HTML",
             reply_markup: methodKeyboard
           })
