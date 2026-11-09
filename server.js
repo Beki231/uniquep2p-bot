@@ -19,7 +19,7 @@ const PROOF_CHANNEL_ID = "@Ut_proof";
 const BANNER_IMAGE_URL = "https://i.postimg.cc/L88G59b1/IMG-20261103-102834-245.jpg"; 
 const STATS_BANNER_URL = "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=80";
 
-// Schemas (የዚህ ቦት ዳታ ተነጥሎ በራሱ Collection እንዲቀመጥ ተደርጓል)
+// Schemas
 const UserSchema = new mongoose.Schema({
   telegramId: { type: Number, required: true, unique: true },
   username: { type: String, default: "" },
@@ -152,7 +152,10 @@ function escapeHTML(value) {
 async function telegram(method, body) {
   const response = await fetch(`${BOT_API}/${method}`, body);
   const result = await response.json();
-  if (!result.ok) throw new Error(result.description || "Telegram API error");
+  if (!result.ok) {
+    console.error(`Telegram API Error [${method}]:`, result);
+    throw new Error(result.description || "Telegram API error");
+  }
   return result.result;
 }
 
@@ -169,7 +172,61 @@ async function checkMembership(userId) {
   }
 }
 
-// ዋናው ሜኑ (〽️ እንዴት ይሰራል? ተጨምሮበታል)
+async function postProofToChannel(order, receiptPhotoId = null) {
+  try {
+    const rawName = order.userName || "ደንበኛ";
+    const maskedName = rawName.length > 3 ? rawName.substring(0, 3) + "***" : rawName + "***";
+    const proofCaption = 
+      `🎉 <b>የተጠናቀቀ የ P2P ግብይት ማረጋገጫ!</b> ✅\n` +
+      `━━━━━━━━━━━━━━━━━━\n` +
+      `👤 <b>ደንበኛ:</b> ${maskedName}\n` +
+      `💵 <b>የተሸጠው USDT:</b> ${order.amount} USDT\n` +
+      `💰 <b>የተከፈለው ብር:</b> ${Number(order.total || 0).toLocaleString()} ETB\n` +
+      `🏦 <b>የክፍያ መንገድ:</b> ${order.method}\n` +
+      `━━━━━━━━━━━━━━━━━━\n` +
+      `⚡ <i>ደህንነቱ የተጠበቀ ፈጣን P2P ንግድ በ @Unique_techs</i>`;
+
+    const actualReceipt = receiptPhotoId || order.receiptFileId;
+
+    if (order.customerProofFileId && actualReceipt) {
+      await telegram("sendMediaGroup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: PROOF_CHANNEL_ID,
+          media: [
+            { type: "photo", media: String(order.customerProofFileId) },
+            { type: "photo", media: String(actualReceipt), caption: proofCaption, parse_mode: "HTML" }
+          ]
+        })
+      });
+    } else if (actualReceipt || order.customerProofFileId) {
+      await telegram("sendPhoto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: PROOF_CHANNEL_ID,
+          photo: String(actualReceipt || order.customerProofFileId),
+          caption: proofCaption,
+          parse_mode: "HTML"
+        })
+      });
+    } else {
+      await telegram("sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: PROOF_CHANNEL_ID,
+          text: proofCaption,
+          parse_mode: "HTML"
+        })
+      });
+    }
+  } catch (proofErr) {
+    console.error("Auto post to proof channel error:", proofErr.message);
+  }
+}
+
 const mainMenuKeyboard = {
   keyboard: [
     [{ text: "💵 USDT መሸጥ" }, { text: "🛒 USDT መግዛት" }],
@@ -220,41 +277,22 @@ app.post("/telegram-webhook", async (req, res) => {
           `💰 <b>${Number(order.total || 0).toLocaleString()} ETB</b> ወደ ${order.method} አካውንትዎ ገቢ ተደርጓል።\n\n` +
           `👆 <i>የተከፈለበት ደረሰኝ ከላይ ተያይዟል። ከ Unique P2P ጋር ስለሰሩ እናመሰግናለን! 🙏</i>`;
 
-        await telegram("sendPhoto", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: order.userId, photo: adminReceiptPhotoId, caption: userMsg, parse_mode: "HTML" })
-        });
-
         try {
-          const rawName = order.userName || "ደንበኛ";
-          const maskedName = rawName.length > 3 ? rawName.substring(0, 3) + "***" : rawName + "***";
-          const proofCaption = 
-            `🎉 <b>የተጠናቀቀ የ P2P ግብይት ማረጋገጫ!</b> ✅\n` +
-            `━━━━━━━━━━━━━━━━━━\n` +
-            `👤 <b>ደንበኛ:</b> ${maskedName}\n` +
-            `💵 <b>የተሸጠው USDT:</b> ${order.amount} USDT\n` +
-            `💰 <b>የተከፈለው ብር:</b> ${Number(order.total || 0).toLocaleString()} ETB\n` +
-            `🏦 <b>የክፍያ መንገድ:</b> ${order.method}\n` +
-            `━━━━━━━━━━━━━━━━━━\n` +
-            `⚡ <i>ደህንነቱ የተጠበቀ ፈጣን P2P ንግድ በ @Unique_techs</i>`;
-
-          const media = [
-            { type: "photo", media: order.customerProofFileId },
-            { type: "photo", media: adminReceiptPhotoId, caption: proofCaption, parse_mode: "HTML" }
-          ];
-
-          await telegram("sendMediaGroup", {
+          await telegram("sendPhoto", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: PROOF_CHANNEL_ID, media: media })
+            body: JSON.stringify({ chat_id: order.userId, photo: adminReceiptPhotoId, caption: userMsg, parse_mode: "HTML" })
           });
-        } catch (proofErr) {}
+        } catch (e) {
+          console.error("User receipt send error:", e.message);
+        }
+
+        await postProofToChannel(order, adminReceiptPhotoId);
 
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: msg.chat.id, text: `✅ ደረሰኙ ለተጠቃሚው ተልኳል፤ ወደ @Ut_proof ተለጥፏል!` })
+          body: JSON.stringify({ chat_id: msg.chat.id, text: `✅ ደረሰኙ ለተጠቃሚው ተልኳል፤ ወደ ${PROOF_CHANNEL_ID} ተለጥፏል!` })
         });
 
         pendingReceiptOrder = null;
@@ -320,7 +358,6 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    // /daily - የዛሬ ዕለታዊ ሪፖርት
     if (text === "/daily") {
       const now = new Date();
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -344,7 +381,6 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    // /broadcast - ለሁሉም ተጠቃሚዎች መልእክት መላኪያ
     if (text.startsWith("/broadcast ")) {
       const broadcastMsg = text.replace("/broadcast ", "").trim();
       if (!broadcastMsg) return;
@@ -377,7 +413,6 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    // /send <user_id> <መልእክት> - ለአንድ ተጠቃሚ መላኪያ
     if (text.startsWith("/send ")) {
       const parts = text.split(" ");
       const targetId = parts[1];
@@ -460,7 +495,6 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    // አስተማማኝ /setrates ተመን መቀየሪያ
     if (text.startsWith("/setrates")) {
       const p = text.split(/\s+/).filter(x => x.trim() !== "");
       if (p.length >= 5) {
@@ -504,7 +538,7 @@ app.post("/telegram-webhook", async (req, res) => {
     }
   }
 
-  // 3. የተጠቃሚ የንግድ ሂደት (Interactive Normal Chat Bot)
+  // 3. የተጠቃሚ የንግድ ሂደት
   if (msg && msg.from) {
     const userId = msg.from.id;
     let user = await User.findOne({ telegramId: userId });
@@ -574,7 +608,6 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    // 〽️ እንዴት ይሰራል? (ተጠቃሚው አዝራሩን ሲጫን)
     if (text === "〽️ እንዴት ይሰራል?") {
       const howItWorksText = 
         `📖 <b>ቦቱ እንዴት ይሰራል? (HOW IT WORKS)</b>\n` +
@@ -1016,6 +1049,7 @@ app.post("/telegram-webhook", async (req, res) => {
         order.status = "approved";
         await order.save();
         await telegram("sendMessage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: order.userId, text: `✅ ትዕዛዝዎ ጸድቋል! ${Number(order.total || 0).toLocaleString()} ETB ተከፍሏል።` }) });
+        await postProofToChannel(order);
         await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "Approved!" }) });
         return;
       }
