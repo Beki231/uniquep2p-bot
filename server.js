@@ -19,7 +19,7 @@ const PROOF_CHANNEL_ID = "@Ut_proof";
 const BANNER_IMAGE_URL = "https://i.postimg.cc/L88G59b1/IMG-20261103-102834-245.jpg"; 
 const STATS_BANNER_URL = "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=80";
 
-// Schemas (ለብቻው በራሱ Collection እንዲቀመጥ v2_users እና v2_orders ተሰጥቶታል)
+// Schemas (የዚህ ቦት ዳታ ተነጥሎ በራሱ Collection እንዲቀመጥ ተደርጓል)
 const UserSchema = new mongoose.Schema({
   telegramId: { type: Number, required: true, unique: true },
   username: { type: String, default: "" },
@@ -169,11 +169,12 @@ async function checkMembership(userId) {
   }
 }
 
+// ዋናው ሜኑ (〽️ እንዴት ይሰራል? ተጨምሮበታል)
 const mainMenuKeyboard = {
   keyboard: [
     [{ text: "💵 USDT መሸጥ" }, { text: "🛒 USDT መግዛት" }],
     [{ text: "📊 የዛሬ ተመን" }, { text: "📜 የትዕዛዝ ታሪክ" }],
-    [{ text: "📞 ድጋፍ / አድሚን" }]
+    [{ text: "〽️ እንዴት ይሰራል?" }, { text: "📞 ድጋፍ / አድሚን" }]
   ],
   resize_keyboard: true
 };
@@ -319,7 +320,7 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    // /daily - የዛሬ ትዕዛዞች እና የገንዘብ መጠን
+    // /daily - የዛሬ ዕለታዊ ሪፖርት
     if (text === "/daily") {
       const now = new Date();
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -343,7 +344,7 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    // /broadcast - ለሁሉም የቦቱ ተጠቃሚዎች መልእክት መላኪያ
+    // /broadcast - ለሁሉም ተጠቃሚዎች መልእክት መላኪያ
     if (text.startsWith("/broadcast ")) {
       const broadcastMsg = text.replace("/broadcast ", "").trim();
       if (!broadcastMsg) return;
@@ -376,7 +377,7 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    // /send <user_id> <message> - ለአንድ ሰው ብቻ መላኪያ
+    // /send <user_id> <መልእክት> - ለአንድ ተጠቃሚ መላኪያ
     if (text.startsWith("/send ")) {
       const parts = text.split(" ");
       const targetId = parts[1];
@@ -459,25 +460,47 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
+    // አስተማማኝ /setrates ተመን መቀየሪያ
     if (text.startsWith("/setrates")) {
-      const p = text.split(" ").filter(x => x.trim() !== "");
-      if (p[1] && p[2] && p[3] && p[4]) {
-        exchangeRates = { tier1: Number(p[1]), tier2: Number(p[2]), tier3: Number(p[3]), tier4: Number(p[4]) };
-        await Rate.findOneAndUpdate({ key: "v2_rates" }, exchangeRates, { upsert: true });
-        await telegram("sendMessage", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: msg.chat.id, text: `✅ ተመኖች ተቀይረዋል!\n\n1: ${exchangeRates.tier1} ETB\n2: ${exchangeRates.tier2} ETB\n3: ${exchangeRates.tier3} ETB\n4: ${exchangeRates.tier4} ETB` })
-        });
-        return;
-      } else {
-        await telegram("sendMessage", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: msg.chat.id, text: "⚠️ አጠቃቀም፦ <code>/setrates 178 180 182 185</code>", parse_mode: "HTML" })
-        });
-        return;
+      const p = text.split(/\s+/).filter(x => x.trim() !== "");
+      if (p.length >= 5) {
+        const t1 = Number(p[1]);
+        const t2 = Number(p[2]);
+        const t3 = Number(p[3]);
+        const t4 = Number(p[4]);
+
+        if (!isNaN(t1) && !isNaN(t2) && !isNaN(t3) && !isNaN(t4)) {
+          exchangeRates = { tier1: t1, tier2: t2, tier3: t3, tier4: t4 };
+          
+          await Rate.findOneAndUpdate(
+            { key: "v2_rates" },
+            { $set: { tier1: t1, tier2: t2, tier3: t3, tier4: t4 } },
+            { upsert: true, new: true }
+          );
+
+          await telegram("sendMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: msg.chat.id,
+              text: `✅ <b>ተመኖች በተሳካ ሁኔታ ተቀይረዋል!</b>\n━━━━━━━━━━━━━━━━━━\n🔹 0.5 - 0.9 USDT ➡️ <b>${t1} ETB</b>\n🔹 1.0 - 10 USDT ➡️ <b>${t2} ETB</b>\n🔹 11 - 30 USDT ➡️ <b>${t3} ETB</b>\n🔥 31+ USDT ➡️ <b>${t4} ETB</b>`,
+              parse_mode: "HTML"
+            })
+          });
+          return;
+        }
       }
+
+      await telegram("sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: msg.chat.id,
+          text: "⚠️ <b>ስህተት፦</b> እባክዎ 4ቱን ተመኖች በክፍተት አስገብተው ይላኩ!\n\n<i>ለምሳሌ፦</i> <code>/setrates 178 180 182 185</code>",
+          parse_mode: "HTML"
+        })
+      });
+      return;
     }
   }
 
@@ -546,6 +569,37 @@ app.post("/telegram-webhook", async (req, res) => {
           caption: welcomeText,
           parse_mode: "HTML",
           reply_markup: mainMenuKeyboard
+        })
+      });
+      return;
+    }
+
+    // 〽️ እንዴት ይሰራል? (ተጠቃሚው አዝራሩን ሲጫን)
+    if (text === "〽️ እንዴት ይሰራል?") {
+      const howItWorksText = 
+        `📖 <b>ቦቱ እንዴት ይሰራል? (HOW IT WORKS)</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `USDT ለመሸጥ የሚከተሉትን ቅደም ተከተሎች ይከተሉ፦\n\n` +
+        `1️⃣ <b>መጠን ያስገቡ፦</b>\n` +
+        `🔰 መሸጥ የሚፈልጉትን የ USDT መጠን በቁጥር ይላኩ (ዝቅተኛው መጠን 0.5 USDT ነው።)\n\n` +
+        `2️⃣ <b>ባንክ ይምረጡ፦</b>\n` +
+        `📍 ብር መቀበል የሚፈልጉበትን ባንክ (Telebirr፣ CBE፣ ወዘተ) ከተዘረዘሩት አማራጮች ይምረጡ።\n\n` +
+        `3️⃣ 📌 <b>የሂሳብ መረጃዎን ይላኩ፦</b>\n` +
+        `• የመረጡትን የባንክ ሂሳብ ቁጥር እና ሙሉ ስምዎን በትክክል ጽፈው ይላኩ።\n\n` +
+        `4️⃣ 📎 <b>ክፍያ ፈጽመው ስክሪንሾት ይላኩ፦</b>\n` +
+        `• በሚሰጠው አድራሻ ወይም UID ላይ USDT ገቢ በማድረግ የስክሪንሾት (Screenshot) ፎቶ ይላኩ።\n\n` +
+        `5️⃣ 📌 <b>ብርዎን ይቀበሉ፦</b>\n` +
+        `• ክፍያዎ በአድሚን ተረጋግጦ በደቂቃዎች ውስጥ ወደ ሂሳብዎ ገቢ ይደረጋል!\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `💎 <b>Unique Store— ፈጣን፣ ታማኝ እና አስተማማኝ!</b>`;
+
+      await telegram("sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: userId,
+          text: howItWorksText,
+          parse_mode: "HTML"
         })
       });
       return;
