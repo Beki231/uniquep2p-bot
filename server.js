@@ -128,13 +128,6 @@ mongoose.connect(MONGO_URI)
   })
   .catch(err => console.error("MongoDB error:", err));
 
-function isStoreOpen() {
-  const now = new Date();
-  const utcHours = now.getUTCHours();
-  const eatHours = (utcHours + 3) % 24; 
-  return eatHours >= 7 && eatHours < 21;
-}
-
 function getRate(amount) {
   if (amount >= 0.5 && amount < 1) return exchangeRates.tier1;
   if (amount >= 1 && amount <= 10) return exchangeRates.tier2;
@@ -184,9 +177,7 @@ async function postProofToChannel(order, receiptPhotoId = null) {
       `💰 <b>የተከፈለው ብር:</b> ${Number(order.total || 0).toLocaleString()} ETB\n` +
       `🏦 <b>የክፍያ መንገድ:</b> ${order.method}\n` +
       `━━━━━━━━━━━━━━━━━━\n` +
-      `⚡<b>ደህንነቱ የተጠበቀ ፈጣን P2P ንግድ በUnique Store አሁኑኑ Order ያርጉ👇</b>\n` +
-      `@Uniquep2pbot\n` +
-      `@Uniquep2pbot`;
+      `⚡ <i>ደህንነቱ የተጠበቀ ፈጣን P2P ንግድ በ @Unique_techs</i>`;
 
     const actualReceipt = receiptPhotoId || order.receiptFileId;
 
@@ -593,7 +584,6 @@ app.post("/telegram-webhook", async (req, res) => {
       const welcomeText = 
         `👋 <b>እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!</b>\n\n` +
         `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n\n` +
-        `⏰ <b>የስራ ሰዓት፦</b> ከጠዋቱ 1:00 - ማታ 3:00\n\n` +
         `👇 <b>ለመገበያየት ከስር ያሉትን አዝራሮች ይጠቀሙ፦</b>`;
 
       await telegram("sendPhoto", {
@@ -730,15 +720,6 @@ app.post("/telegram-webhook", async (req, res) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chat_id: userId, text: botSettings.pauseReason || "⏸️ ቦቱ ለጊዜው ቆሟል።" })
-        });
-        return;
-      }
-
-      if (!isStoreOpen()) {
-        await telegram("sendMessage", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: userId, text: "⏰ የስራ ሰዓታችን ከጠዋቱ 1:00 እስከ ማታ 3:00 ነው። እባክዎ በስራ ሰዓት ይጠቀሙ!" })
         });
         return;
       }
@@ -1028,6 +1009,61 @@ app.post("/telegram-webhook", async (req, res) => {
     }
 
     if (String(cbUserId) === ADMIN_CHAT_ID) {
+      if (callbackData === "open_admin_panel") {
+        await telegram("answerCallbackQuery", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: callback.id })
+        });
+
+        const panelHelpText = 
+          `🔐 <b>የአድሚን መቆጣጠሪያ ፓነል (Admin Panel Commands)</b>\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+          `1️⃣ <b>/setrates</b>\n` +
+          `• <b>ጥቅም፦</b> የ 4ቱንም ደረጃዎች የ USDT መሸጫ ዋጋ በአንድ ላይ ለመቀየር።\n` +
+          `• <b>አጠቃቀም፦</b> <code>/setrates 178 180 182 185</code>\n\n` +
+          `2️⃣ <b>/pause</b>\n` +
+          `• <b>ጥቅም፦</b> ቦቱን ለጥገና ወይም እረፍት ለጊዜው ሽያጭ እንዳይቀበል ለማቆም።\n` +
+          `• <b>አጠቃቀም፦</b> <code>/pause</code>\n\n` +
+          `3️⃣ <b>/resume</b>\n` +
+          `• <b>ጥቅም፦</b> የቆመውን ቦት ወደ መደበኛ ስራ ለመመለስ።\n` +
+          `• <b>አጠቃቀም፦</b> <code>/resume</code>\n\n` +
+          `4️⃣ <b>/broadcast</b>\n` +
+          `• <b>ጥቅም፦</b> ለቦቱ ተጠቃሚዎች በሙሉ በአንድ ጊዜ ማስታወቂያ ለመላክ።\n` +
+          `• <b>አጠቃቀም፦</b> <code>/broadcast ዛሬ ተመን ጨምሯል!</code>\n\n` +
+          `5️⃣ <b>/send</b>\n` +
+          `• <b>ጥቅም፦</b> ለአንድ የተወሰነ ተጠቃሚ በቴሌግራም ID ብቻ መልዕክት ለመላክ።\n` +
+          `• <b>አጠቃቀም፦</b> <code>/send &lt;USER_ID&gt; መልዕክትዎ</code>\n\n` +
+          `6️⃣ <b>/stats</b>\n` +
+          `• <b>ጥቅም፦</b> አጠቃላይ የትዕዛዞች እና የተጠቃሚዎች ቁጥር ለማየት።\n` +
+          `• <b>አጠቃቀም፦</b> <code>/stats</code>\n\n` +
+          `7️⃣ <b>/daily</b>\n` +
+          `• <b>ጥቅም፦</b> የዛሬውን ቀን ብቻ የተሸጠ USDT እና የወጣ ብር ድምር ለማየት።\n` +
+          `• <b>አጠቃቀም፦</b> <code>/daily</code>\n\n` +
+          `8️⃣ <b>/statics</b>\n` +
+          `• <b>ጥቅም፦</b> የቀጥታ ሰዓት፣ ቀንና የቦቱን አጠቃላይ ተጠቃሚ ከነ ምስል ለማየት።\n` +
+          `• <b>አጠቃቀም፦</b> <code>/statics</code>\n\n` +
+          `9️⃣ <b>/ban</b>\n` +
+          `• <b>ጥቅም፦</b> ህግ የሚያጠፋ ተጠቃሚን ከቦቱ አገልግሎት ለማገድ።\n` +
+          `• <b>አጠቃቀም፦</b> <code>/ban &lt;USER_ID&gt;</code>\n\n` +
+          `🔟 <b>/unban</b>\n` +
+          `• <b>ጥቅም፦</b> የታገደ ተጠቃሚን እገዳ አንስቶ ወደ ቦቱ ለመመለስ።\n` +
+          `• <b>አጠቃቀም፦</b> <code>/unban &lt;USER_ID&gt;</code>\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `💡 <i>የትኛውንም ትዕዛዝ ኮፒ አድርገው ጽፈው መላክ ይችላሉ!</i>`;
+
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: ADMIN_CHAT_ID,
+            text: panelHelpText,
+            parse_mode: "HTML"
+          })
+        });
+        return;
+      }
+
       if (callbackData.startsWith("ban_user:")) {
         const targetId = Number(callbackData.split(":")[1]);
         await User.findOneAndUpdate({ telegramId: targetId }, { isBanned: true });
