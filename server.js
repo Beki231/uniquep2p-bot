@@ -184,7 +184,7 @@ async function postProofToChannel(order, receiptPhotoId = null) {
       `💰 <b>የተከፈለው ብር:</b> ${Number(order.total || 0).toLocaleString()} ETB\n` +
       `🏦 <b>የክፍያ መንገድ:</b> ${order.method}\n` +
       `━━━━━━━━━━━━━━━━━━\n` +
-      `⚡ <b>ደህንነቱ የተጠበቀ ፈጣን P2P ንግድ! order በማረግ ፈጣን ክፍያ ማግኘት ይችላሉ👇</b>\n\n` +
+      `⚡ <i>ደህንነቱ የተጠበቀ ፈጣን P2P ንግድ! order በማረግ ፈጣን ክፍያ ማግኘት ይችላሉ👇</i>\n` +
       `@Uniquep2pbot\n` +
       `@Uniquep2pbot`;
 
