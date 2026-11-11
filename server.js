@@ -291,7 +291,7 @@ const mainMenuKeyboard = {
   keyboard: [
     [{ text: "💵 USDT መሸጥ" }, { text: "🛒 USDT መግዛት" }],
     [{ text: "📊 የዛሬ ተመን" }, { text: "📜 የትዕዛዝ ታሪክ" }],
-    [{ text: "〽️ እንዴት ይሰራል?" }, { text: "📞 ድጋፍ / አድሚን" }]
+    [{ text: "📞 ድጋፍ / አድሚን" }]
   ],
   resize_keyboard: true
 };
@@ -727,36 +727,6 @@ app.post("/telegram-webhook", async (req, res) => {
             caption: welcomeCaption,
             caption_entities: welcomeEntities,
             reply_markup: mainMenuKeyboard
-          })
-        });
-        return;
-      }
-
-      if (text === "〽️ እንዴት ይሰራል?") {
-        const howItWorksText = 
-          `📖 <b>ቦቱ እንዴት ይሰራል? (HOW IT WORKS)</b>\n` +
-          `━━━━━━━━━━━━━━━━━━━━\n` +
-          `USDT ለመሸጥ የሚከተሉትን ቅደም ተከተሎች ይከተሉ፦\n\n` +
-          `1️⃣ <b>መጠን ያስገቡ፦</b>\n` +
-          `🔰 መሸጥ የሚፈልጉትን የ USDT መጠን በቁጥር ይላኩ (ዝቅተኛው መጠን 0.5 USDT ነው።)\n\n` +
-          `2️⃣ <b>ባንክ ይምረጡ፦</b>\n` +
-          `📍 ብር መቀበል የሚፈልጉበትን ባንክ (Telebirr፣ CBE፣ ወዘተ) ከተዘረዘሩት አማራጮች ይምረጡ።\n\n` +
-          `3️⃣ 📌 <b>የሂሳብ መረጃዎን ይላኩ፦</b>\n` +
-          `• የመረጡትን የባንክ ሂሳብ ቁጥር እና ሙሉ ስምዎን በትክክል ጽፈው ይላኩ።\n\n` +
-          `4️⃣ 📎 <b>ክፍያ ፈጽመው ስክሪንሾት ይላኩ፦</b>\n` +
-          `• በሚሰጠው አድራሻ ወይም UID ላይ USDT ገቢ በማድረግ የስክሪንሾት (Screenshot) ፎቶ ይላኩ።\n\n` +
-          `5️⃣ 📌 <b>ብርዎን ይቀበሉ፦</b>\n` +
-          `• ክፍያዎ በአድሚን ተረጋግጦ በደቂቃዎች ውስጥ ወደ ሂሳብዎ ገቢ ይደረጋል!\n` +
-          `━━━━━━━━━━━━━━━━━━━━\n` +
-          `💎 <b>Unique Store— ፈጣን፣ ታማኝ እና አስተማማኝ!</b>`;
-
-        await telegram("sendMessage", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: userId,
-            text: howItWorksText,
-            parse_mode: "HTML"
           })
         });
         return;
