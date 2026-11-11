@@ -91,7 +91,7 @@ const cryptoNetworks = {
       { offset: 79, length: 10, type: "bold" },
       { offset: 90, length: 10, type: "code" },
       { offset: 102, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
-      { offset: 105, length: 34, type: "bold" }
+      { offset: 105, length: 33, type: "bold" }
     ]
   },
   bep20: {
@@ -115,7 +115,7 @@ const cryptoNetworks = {
       { offset: 101, length: 2, type: "custom_emoji", custom_emoji_id: "5469718869536940860" },
       { offset: 104, length: 22, type: "italic" },
       { offset: 128, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
-      { offset: 131, length: 34, type: "bold" }
+      { offset: 131, length: 33, type: "bold" }
     ]
   },
   ton: {
@@ -139,7 +139,7 @@ const cryptoNetworks = {
       { offset: 104, length: 2, type: "custom_emoji", custom_emoji_id: "5469718869536940860" },
       { offset: 107, length: 22, type: "italic" },
       { offset: 131, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
-      { offset: 134, length: 34, type: "bold" }
+      { offset: 134, length: 33, type: "bold" }
     ]
   },
   ltc: {
@@ -163,7 +163,7 @@ const cryptoNetworks = {
       { offset: 90, length: 2, type: "custom_emoji", custom_emoji_id: "5469718869536940860" },
       { offset: 93, length: 22, type: "italic" },
       { offset: 117, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
-      { offset: 120, length: 34, type: "bold" }
+      { offset: 120, length: 33, type: "bold" }
     ]
   }
 };
@@ -1004,6 +1004,7 @@ app.post("/telegram-webhook", async (req, res) => {
     }
 
     // ደረጃ 1፦ መጠን
+    // ደረጃ 1፦ መጠን
     if (user.step === "awaiting_amount") {
       const amt = parseFloat(text);
       if (isNaN(amt) || amt < 0.5) {
@@ -1029,11 +1030,14 @@ app.post("/telegram-webhook", async (req, res) => {
         ]
       };
 
+      const totalStr = `${total.toLocaleString()} ETB`;
+      const bottomPrompt = "USDT የሚልኩበትን ኔትወርክ ይምረጡ፦";
+
       const summaryText =
         `🔥 መጠን: ${amt} USDT\n` +
         `🕯 ተመን: 1 USDT = ${rate} ETB\n` +
-        `💰 የሚቀበሉት ድምር: ${total.toLocaleString()} ETB\n\n` +
-        `⬇️ USDT የሚልኩበትን ኔትወርክ ይምረጡ፦`;
+        `💰 የሚቀበሉት ድምር: ${totalStr}\n\n` +
+        `⬇️ ${bottomPrompt}`;
 
       const summaryEntities = [
         { offset: summaryText.indexOf("🔥"), length: 2, type: "custom_emoji", custom_emoji_id: "4956499161319998529" },
@@ -1042,9 +1046,9 @@ app.post("/telegram-webhook", async (req, res) => {
         { offset: summaryText.indexOf("ተመን:"), length: 5, type: "bold" },
         { offset: summaryText.indexOf("💰"), length: 2, type: "custom_emoji", custom_emoji_id: "4958926882994127612" },
         { offset: summaryText.indexOf("የሚቀበሉት ድምር:"), length: 13, type: "bold" },
-        { offset: summaryText.indexOf(`${total.toLocaleString()} ETB`), length: `${total.toLocaleString()} ETB`.length, type: "bold" },
+        { offset: summaryText.lastIndexOf(totalStr), length: totalStr.length, type: "bold" },
         { offset: summaryText.indexOf("⬇️"), length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
-        { offset: summaryText.indexOf("USDT የሚልኩበትን"), length: 27, type: "bold" }
+        { offset: summaryText.indexOf(bottomPrompt), length: bottomPrompt.length, type: "bold" }
       ];
 
       await telegram("sendMessage", {
