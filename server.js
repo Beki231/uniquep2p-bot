@@ -282,7 +282,6 @@ async function buildCustomEmojiEntities(text, makeBold = true) {
   }
 }
 
-
 async function checkMembership(userId) {
   try {
     const res = await telegram("getChatMember", {
@@ -1005,6 +1004,95 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
+        user.step = "awaiting_sell_agree";
+        user.tempOrder = {};
+        await user.save();
+
+        let sellIntroText = "";
+        const sellIntroEntities = [];
+
+        const addSellPart = (str, customEmojiId = null, isBold = false) => {
+          const offset = sellIntroText.length;
+          sellIntroText += str;
+          if (customEmojiId) {
+            sellIntroEntities.push({
+              type: "custom_emoji",
+              offset,
+              length: str.length,
+              custom_emoji_id: customEmojiId
+            });
+          }
+          if (isBold) {
+            sellIntroEntities.push({
+              type: "bold",
+              offset,
+              length: str.length
+            });
+          }
+        };
+
+        addSellPart("🔥", "5039644681583985437");
+        addSellPart("የ USDT መሸጫ ገጽ (SELL USDT)", null, true);
+        addSellPart("\n━━━━━━━━━━━━━━━━━━━━━\n");
+
+        addSellPart("📊", "5042290883949495533");
+        addSellPart(" የዛሬ የመሸጫ ተመኖች (Rates)፦", null, true);
+        addSellPart("\n\n");
+
+        addSellPart("✅", "6266967801580231067");
+        addSellPart("0.5 - 0.9");
+        addSellPart("💵", "5409048419211682843");
+        addSellPart(`${exchangeRates.tier1} ETB`, null, true);
+        addSellPart("\n");
+
+        addSellPart("✅", "6266967801580231067");
+        addSellPart("1.0 - 10 ");
+        addSellPart("💵", "5409048419211682843");
+        addSellPart(`${exchangeRates.tier2} ETB`, null, true);
+        addSellPart("\n");
+
+        addSellPart("✅", "6266967801580231067");
+        addSellPart(" 11 - 30 ");
+        addSellPart("💵", "5409048419211682843");
+        addSellPart(` ${exchangeRates.tier3} ETB`, null, true);
+        addSellPart("\n");
+
+        addSellPart("✅", "6266967801580231067");
+        addSellPart(" 31+      ");
+        addSellPart("💵", "5409048419211682843");
+        addSellPart(`  ${exchangeRates.tier4} ETB`, null, true);
+        addSellPart("\n\n");
+
+        addSellPart("🔽", "5447183459602669338");
+        addSellPart("ዝቅተኛ የመሸጫ መጠን፦ 0.5 USDT", null, true);
+        addSellPart("\n\n");
+
+        addSellPart("👇", "5231102735817918643");
+        addSellPart(" ለመቀጠል «");
+        addSellPart("✅", "6266967801580231067");
+        addSellPart("ተስማምቻለሁ", null, true);
+        addSellPart("» የሚለውን ይጫኑ፡-");
+
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: userId,
+            text: sellIntroText,
+            entities: sellIntroEntities,
+            reply_markup: {
+              keyboard: [
+                [{ text: "✅ ተስማምቻለሁ" }],
+                [{ text: "❌ ሰርዝ (Cancel)" }]
+              ],
+              resize_keyboard: true
+            }
+          })
+        });
+        return;
+      }
+
+      if (text === "✅ ተስማምቻለሁ" && user.step === "awaiting_sell_agree") {
         user.step = "awaiting_amount";
         user.tempOrder = {};
         await user.save();
