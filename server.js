@@ -1004,7 +1004,6 @@ app.post("/telegram-webhook", async (req, res) => {
     }
 
     // ደረጃ 1፦ መጠን
-    // ደረጃ 1፦ መጠን
     if (user.step === "awaiting_amount") {
       const amt = parseFloat(text);
       if (isNaN(amt) || amt < 0.5) {
@@ -1063,7 +1062,7 @@ app.post("/telegram-webhook", async (req, res) => {
       });
       return;
     }
-
+    
     // ደረጃ 2፦ አካውንት ቁጥር
     if (user.step === "awaiting_account") {
       const cleanAcc = text.replace(/\s+/g, '');
@@ -1090,10 +1089,11 @@ app.post("/telegram-webhook", async (req, res) => {
       user.step = "awaiting_name";
       await user.save();
 
-      const namePromptText = `✅ የአካውንቱን ሙሉ ስም ያስገቡ፦`;
+      const label = "የአካውንቱን ሙሉ ስም ያስገቡ፦";
+      const namePromptText = `✅ ${label}`;
       const namePromptEntities = [
         { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6217663806110175239" },
-        { offset: 2, length: 22, type: "bold" }
+        { offset: namePromptText.indexOf(label), length: label.length, type: "bold" }
       ];
 
       await telegram("sendMessage", {
@@ -1108,7 +1108,8 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    // ደረጃ 3፦ ሙሉ ስም
+
+        // ደረጃ 3፦ ሙሉ ስም
     if (user.step === "awaiting_name") {
       if (text.length < 3) {
         await telegram("sendMessage", {
@@ -1123,12 +1124,14 @@ app.post("/telegram-webhook", async (req, res) => {
       user.step = "awaiting_screenshot";
       await user.save();
 
-      const ssPromptText = `✅የመጨረሻ ደረጃ፦\n\nየላኩበትን ደረሰኝ🗓 (Screenshot ፎቶ) አሁን ይላኩ፦`;
+      const stepTitle = "የመጨረሻ ደረጃ፦";
+      const stepSub = "(Screenshot ፎቶ)";
+      const ssPromptText = `✅${stepTitle}\n\nየላኩበትን ደረሰኝ🗓 ${stepSub} አሁን ይላኩ፦`;
       const ssPromptEntities = [
         { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
-        { offset: 1, length: 12, type: "bold" },
-        { offset: 24, length: 2, type: "custom_emoji", custom_emoji_id: "4956214413578207998" },
-        { offset: 27, length: 17, type: "bold" }
+        { offset: ssPromptText.indexOf(stepTitle), length: stepTitle.length, type: "bold" },
+        { offset: ssPromptText.indexOf("🗓"), length: 2, type: "custom_emoji", custom_emoji_id: "4956214413578207998" },
+        { offset: ssPromptText.indexOf(stepSub), length: stepSub.length, type: "bold" }
       ];
 
       await telegram("sendMessage", {
