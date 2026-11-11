@@ -675,7 +675,7 @@ app.post("/telegram-webhook", async (req, res) => {
       user.tempOrder = {};
       await user.save();
 
-      const welcomeCaption = "<b>🔥 እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ</b>!↔️\n\n <b>ደህንነቱ የተጠበቀ🛡 እና እጅግ ፈጣን የ USDT💵 መገበያያ ቤት!</b>⚡️\n\n ⬇️ <b>የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-</b>";
+      const welcomeCaption = "🔥 እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!↔️\n\n ደህንነቱ የተጠበቀ🛡 እና እጅግ ፈጣን የ USDT💵 መገበያያ ቤት!⚡️\n\n ⬇️ የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-";
 
       const welcomeEntities = await buildCustomEmojiEntities(welcomeCaption);
 
