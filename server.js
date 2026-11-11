@@ -152,6 +152,50 @@ async function telegram(method, body) {
   return result.result;
 }
 
+const CUSTOM_EMOJI_IDS = [
+  "5039644681583985437",
+  "5911078333168227043",
+  "5271837459783638319",
+  "5197288647275071607",
+  "5040025580758631490",
+  "5456140674028019486",
+  "5406745015365943482"
+];
+
+async function buildCustomEmojiEntities(text) {
+  try {
+    const stickers = await telegram("getCustomEmojiStickers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        custom_emoji_ids: CUSTOM_EMOJI_IDS
+      })
+    });
+
+    const entities = [];
+
+    for (const sticker of stickers) {
+      const emoji = sticker.emoji;
+      if (!emoji || !sticker.custom_emoji_id) continue;
+
+      const offset = text.indexOf(emoji);
+      if (offset === -1) continue;
+
+      entities.push({
+        type: "custom_emoji",
+        offset: offset,
+        length: emoji.length,
+        custom_emoji_id: sticker.custom_emoji_id
+      });
+    }
+
+    return entities.sort((a, b) => a.offset - b.offset);
+  } catch (error) {
+    console.error("Custom Emoji Error:", error.message);
+    return [];
+  }
+}
+
 async function checkMembership(userId) {
   try {
     const res = await telegram("getChatMember", {
@@ -583,15 +627,7 @@ app.post("/telegram-webhook", async (req, res) => {
 
       const welcomeCaption = "🔥 እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!↔️\n\n ደህንነቱ የተጠበቀ🛡 እና እጅግ ፈጣን የ USDT💵 መገበያያ ቤት!⚡️\n\n ⬇️ የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-";
 
-      const welcomeEntities = [
-        { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039644681583985437" },
-        { offset: 27, length: 4, type: "custom_emoji", custom_emoji_id: "5911078333168227043" },
-        { offset: 40, length: 2, type: "custom_emoji", custom_emoji_id: "5271837459783638319" },
-        { offset: 56, length: 2, type: "custom_emoji", custom_emoji_id: "5197288647275071607" },
-        { offset: 76, length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
-        { offset: 88, length: 2, type: "custom_emoji", custom_emoji_id: "5456140674028019486" },
-        { offset: 93, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" }
-      ];
+      const welcomeEntities = await buildCustomEmojiEntities(welcomeCaption);
 
       await telegram("sendPhoto", {
         method: "POST",
