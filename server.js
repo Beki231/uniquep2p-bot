@@ -13,7 +13,7 @@ const ADMIN_CHAT_ID = String(process.env.ADMIN_CHAT_ID || "").trim();
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "my_p2p_secret_key";
 const MONGO_URI = process.env.MONGO_URI;
 const BOT_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
-const CHANNEL_ID = "@Unique_techs";
+const CHANNEL_ID = "@Unique_Techs";
 
 const BANNER_IMAGE_URL = "https://i.postimg.cc/L88G59b1/IMG-20261103-102834-245.jpg"; 
 const STATS_BANNER_URL = "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=80";
@@ -24,6 +24,7 @@ const UserSchema = new mongoose.Schema({
   username: { type: String, default: "" },
   firstName: { type: String, default: "" },
   isBanned: { type: Boolean, default: false },
+  isJoined: { type: Boolean, default: false },
   step: { type: String, default: "idle" },
   tempOrder: { type: Object, default: {} },
   createdAt: { type: Date, default: Date.now }
@@ -289,8 +290,9 @@ async function checkMembership(userId) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: CHANNEL_ID, user_id: userId })
     });
-    return ["creator", "administrator", "member"].includes(res.status);
+    return ["creator", "administrator", "member", "restricted"].includes(res.status);
   } catch (err) {
+    console.error("Membership Check Error:", err.message);
     return false;
   }
 }
@@ -657,45 +659,50 @@ app.post("/telegram-webhook", async (req, res) => {
         });
       }
 
-      const isMember = await checkMembership(userId);
-      if (!isMember) {
-        const joinText = `⚠️ቦቱን ለመጠቀም መጀመሪያ ቻናላችንን መቀላቀል አለብዎት!\n\n👇እባክዎ ከታች ያለውን ሊንክ ተጭነው ቻናሉን ከተቀላቀሉ በኋላ «✅ ተቀላቅያለሁ (Check)» የሚለውን ይጫኑ፡-`;
-        const joinEntities = [
-          { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5447644880824181073" },
-          { offset: 2, length: 35, type: "bold" },
-          { offset: 39, length: 2, type: "custom_emoji", custom_emoji_id: "5231102735817918643" },
-          { offset: 81, length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" },
-          { offset: 82, length: 19, type: "bold" }
-        ];
+      if (!user.isJoined) {
+        const isMember = await checkMembership(userId);
+        if (isMember) {
+          user.isJoined = true;
+          await user.save();
+        } else {
+          const joinText = `⚠️ቦቱን ለመጠቀም መጀመሪያ ቻናላችንን መቀላቀል አለብዎት!\n\n👇እባክዎ ከታች ያለውን ሊንክ ተጭነው ቻናሉን ከተቀላቀሉ በኋላ «✅ ተቀላቅያለሁ (Check)» የሚለውን ይጫኑ፡-`;
+          const joinEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5447644880824181073" },
+            { offset: 2, length: 35, type: "bold" },
+            { offset: 39, length: 2, type: "custom_emoji", custom_emoji_id: "5231102735817918643" },
+            { offset: 81, length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" },
+            { offset: 82, length: 19, type: "bold" }
+          ];
 
-        await telegram("sendMessage", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: userId,
-            text: joinText,
-            entities: joinEntities,
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  {
-                    text: "ቻናል ተቀላቀል (@Unique_techs)",
-                    icon_custom_emoji_id: "6267129592998270736",
-                    url: "https://t.me/Unique_techs"
-                  }
-                ],
-                [
-                  {
-                    text: "ተቀላቅያለሁ (Check)",
-                    icon_custom_emoji_id: "6266967801580231067",
-                    callback_data: "check_join"
-                  }
+          await telegram("sendMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: userId,
+              text: joinText,
+              entities: joinEntities,
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "ቻናል ተቀላቀል (@Unique_Techs)",
+                      icon_custom_emoji_id: "6267129592998270736",
+                      url: "https://t.me/Unique_Techs"
+                    }
+                  ],
+                  [
+                    {
+                      text: "ተቀላቅያለሁ (Check)",
+                      icon_custom_emoji_id: "6266967801580231067",
+                      callback_data: "check_join"
+                    }
+                  ]
                 ]
-              ]
-            }
-          })
-        });
-        return;
+              }
+            })
+          });
+          return;
+        }
       }
 
       const text = msg.text ? msg.text.trim() : "";
@@ -962,7 +969,7 @@ app.post("/telegram-webhook", async (req, res) => {
           `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
           `➡️ ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-\n\n` +
           `🤝 Admin Support፦ @Aropc\n` +
-          `✅ Channel፦ @Unique_techs\n\n` +
+          `✅ Channel፦ @Unique_Techs\n\n` +
           `⏰የስራ ሰዓት፦ 24/7 ሁልጊዜ አለን!✅`;
 
         const supportEntities = [
@@ -1434,6 +1441,8 @@ app.post("/telegram-webhook", async (req, res) => {
       if (callbackData === "check_join") {
         const isMember = await checkMembership(cbUserId);
         if (isMember) {
+          await User.findOneAndUpdate({ telegramId: cbUserId }, { isJoined: true });
+
           await telegram("answerCallbackQuery", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
