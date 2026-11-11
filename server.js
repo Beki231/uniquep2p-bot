@@ -858,15 +858,29 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    if (text === "📞 ድጋፍ / አድሚን") {
+        if (text === "📞 ድጋፍ / አድሚን") {
       const supportText = 
-        `📞 <b>የደንበኞች ድጋፍ እና ማህበረሰብ</b>\n` +
+        `👨‍💻የደንበኞች ድጋፍ እና ማህበረሰብ\n` +
         `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `👉 <b>ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-</b>\n\n` +
-        `👤 <b>Admin Support፦</b> @Aropc\n` +
-        `📢 <b>Channel፦</b> @Unique_techs\n` +
-        `📸 <b>Proof Channel፦</b> @Ut_proof\n\n` +
-        `⏰ <b>የስራ ሰዓት</b>፦ <i>24/7 ሁልጊዜ አለን!</i>`;
+        `➡️ ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-\n\n` +
+        `🤝 Admin Support፦ @Aropc\n` +
+        `✅ Channel፦ @Unique_techs\n\n` +
+        `⏰የስራ ሰዓት፦ 24/7 ሁልጊዜ አለን!✅`;
+
+      const supportEntities = [
+        { offset: 0, length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" },
+        { offset: 5, length: 24, type: "bold" },
+        { offset: 52, length: 2, type: "custom_emoji", custom_emoji_id: "5042341817966658405" },
+        { offset: 55, length: 44, type: "bold" },
+        { offset: 101, length: 2, type: "custom_emoji", custom_emoji_id: "6264720734820505831" },
+        { offset: 104, length: 14, type: "bold" },
+        { offset: 126, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
+        { offset: 128, length: 8, type: "bold" },
+        { offset: 152, length: 1, type: "custom_emoji", custom_emoji_id: "6285240160120477644" },
+        { offset: 153, length: 7, type: "bold" },
+        { offset: 161, length: 15, type: "italic" },
+        { offset: 176, length: 1, type: "custom_emoji", custom_emoji_id: "4958610528588008305" }
+      ];
 
       await telegram("sendMessage", {
         method: "POST",
@@ -874,11 +888,12 @@ app.post("/telegram-webhook", async (req, res) => {
         body: JSON.stringify({
           chat_id: userId,
           text: supportText,
-          parse_mode: "HTML"
+          entities: supportEntities
         })
       });
       return;
     }
+
 
     if (text === "💵 USDT መሸጥ") {
       const botSettings = await Settings.findOne({ key: "v2_settings" });
