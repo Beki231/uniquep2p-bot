@@ -355,7 +355,7 @@ app.post("/telegram-webhook", async (req, res) => {
             { offset: userMsg.indexOf(headerStr), length: headerStr.length, type: "bold" },
             { offset: userMsg.indexOf(amountStr), length: amountStr.length, type: "bold" },
             { offset: userMsg.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
-            { offset: userMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6217663806110175239" },
+            { offset: userMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
             { offset: userMsg.indexOf("🍾"), length: 2, type: "custom_emoji", custom_emoji_id: "5042274086332400375" },
             { offset: userMsg.indexOf(totalStr), length: totalStr.length, type: "bold" },
             { offset: userMsg.indexOf("🏦"), length: 2, type: "custom_emoji", custom_emoji_id: bankEmojiId },
@@ -656,7 +656,7 @@ app.post("/telegram-webhook", async (req, res) => {
           { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5447644880824181073" },
           { offset: 2, length: 35, type: "bold" },
           { offset: 39, length: 2, type: "custom_emoji", custom_emoji_id: "5231102735817918643" },
-          { offset: 81, length: 1, type: "custom_emoji", custom_emoji_id: "4958610528588008305" },
+          { offset: 81, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
           { offset: 82, length: 19, type: "bold" }
         ];
 
@@ -679,7 +679,7 @@ app.post("/telegram-webhook", async (req, res) => {
                 [
                   {
                     text: "ተቀላቅያለሁ (Check)",
-                    icon_custom_emoji_id: "4958610528588008305",
+                    icon_custom_emoji_id: "6267008582294705964",
                     callback_data: "check_join"
                   }
                 ]
@@ -754,63 +754,60 @@ app.post("/telegram-webhook", async (req, res) => {
       }
 
       if (text === "📊 የዛሬ ተመን") {
-        const rateText = 
-          `🥳የዛሬ የ USDT መሸጫ ዋጋዎች፦\n` +
-          `━━━━━━━━━━━━━━━━━━\n` +
-          `✅ 0.5 - 0.9💵 ${exchangeRates.tier1} ETB\n` +
-          `✅1.0 - 10 💵 ${exchangeRates.tier2} ETB\n` +
-          `✅ 11 - 30 💵 ${exchangeRates.tier3} ETB\n` +
-          `✅ 31+      💵  ${exchangeRates.tier4} ETB (ምርጥ ተመን)\n` +
-          `━━━━━━━━━━━━━━━━━━\n` +
-          `ለመሸጥ "✔️ USDT መሸጥ" የሚለውን ይጫኑ!`;
-
-        const rateEmojis = [
-          { char: "🥳", id: "6217716209006153211" },
-          { char: "✅", id: "6217663806110175239" },
-          { char: "💵", id: "5040025580758631490" },
-          { char: "✅", id: "6217663806110175239" },
-          { char: "💵", id: "5040025580758631490" },
-          { char: "✅", id: "6217663806110175239" },
-          { char: "💵", id: "5040025580758631490" },
-          { char: "✅", id: "6217663806110175239" },
-          { char: "💵", id: "4956601935592424315" },
-          { char: "✔️", id: "5039844895779455925" }
-        ];
-
+        let rateText = "";
         const rateEntities = [];
-        let searchFrom = 0;
 
-        for (const item of rateEmojis) {
-          const idx = rateText.indexOf(item.char, searchFrom);
-          if (idx !== -1) {
+        const addRatePart = (str, customEmojiId = null, isBold = false) => {
+          const offset = rateText.length;
+          rateText += str;
+          if (customEmojiId) {
             rateEntities.push({
               type: "custom_emoji",
-              offset: idx,
-              length: item.char.length,
-              custom_emoji_id: item.id
+              offset,
+              length: str.length,
+              custom_emoji_id: customEmojiId
             });
-            searchFrom = idx + item.char.length;
           }
-        }
-
-        const boldPhrases = [
-          "የዛሬ የ USDT መሸጫ ዋጋዎች፦",
-          `${exchangeRates.tier1} ETB`,
-          `${exchangeRates.tier2} ETB`,
-          `${exchangeRates.tier3} ETB`,
-          `${exchangeRates.tier4} ETB (ምርጥ ተመን)`
-        ];
-
-        for (const phrase of boldPhrases) {
-          const idx = rateText.indexOf(phrase);
-          if (idx !== -1) {
+          if (isBold) {
             rateEntities.push({
               type: "bold",
-              offset: idx,
-              length: phrase.length
+              offset,
+              length: str.length
             });
           }
-        }
+        };
+
+        addRatePart("🥳", "6217716209006153211");
+        addRatePart("የዛሬ የ USDT መሸጫ ዋጋዎች፦", null, true);
+        addRatePart("\n━━━━━━━━━━━━━━━━━━\n");
+
+        addRatePart("✅", "6267008582294705964");
+        addRatePart(" 0.5 - 0.9 ");
+        addRatePart("💵", "5040025580758631490");
+        addRatePart(` ${exchangeRates.tier1} ETB`, null, true);
+        addRatePart("\n");
+
+        addRatePart("✅", "6267008582294705964");
+        addRatePart(" 1.0 - 10 ");
+        addRatePart("💵", "5040025580758631490");
+        addRatePart(` ${exchangeRates.tier2} ETB`, null, true);
+        addRatePart("\n");
+
+        addRatePart("✅", "6267008582294705964");
+        addRatePart(" 11 - 30 ");
+        addRatePart("💵", "5040025580758631490");
+        addRatePart(` ${exchangeRates.tier3} ETB`, null, true);
+        addRatePart("\n");
+
+        addRatePart("✅", "6267008582294705964");
+        addRatePart(" 31+      ");
+        addRatePart("💵", "4956601935592424315");
+        addRatePart(`  ${exchangeRates.tier4} ETB (ምርጥ ተመን)`, null, true);
+        addRatePart("\n━━━━━━━━━━━━━━━━━━\n");
+
+        addRatePart("ለመሸጥ \"");
+        addRatePart("✔️", "5039844895779455925");
+        addRatePart(" USDT መሸጥ\" የሚለውን ይጫኑ!");
 
         await telegram("sendMessage", {
           method: "POST",
@@ -818,7 +815,7 @@ app.post("/telegram-webhook", async (req, res) => {
           body: JSON.stringify({
             chat_id: userId,
             text: rateText,
-            entities: rateEntities.sort((a, b) => a.offset - b.offset),
+            entities: rateEntities,
             reply_markup: backToMainKeyboard
           })
         });
@@ -972,7 +969,7 @@ app.post("/telegram-webhook", async (req, res) => {
           { offset: 152, length: 1, type: "custom_emoji", custom_emoji_id: "6285240160120477644" },
           { offset: 153, length: 7, type: "bold" },
           { offset: 161, length: 15, type: "italic" },
-          { offset: 176, length: 1, type: "custom_emoji", custom_emoji_id: "4958610528588008305" }
+          { offset: 176, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" }
         ];
 
         await telegram("sendMessage", {
@@ -1143,7 +1140,7 @@ app.post("/telegram-webhook", async (req, res) => {
         const label = "የአካውንቱን ሙሉ ስም ያስገቡ፦";
         const namePromptText = `✅ ${label}`;
         const namePromptEntities = [
-          { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6217663806110175239" },
+          { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
           { offset: namePromptText.indexOf(label), length: label.length, type: "bold" }
         ];
 
@@ -1232,7 +1229,7 @@ app.post("/telegram-webhook", async (req, res) => {
           await user.save();
 
           const isCBE = orderData.method === "CBE";
-          const topCheckId = isCBE ? "6266967801580231067" : "4958610528588008305";
+          const topCheckId = isCBE ? "6266967801580231067" : "6267008582294705964";
           const dollarEmojiId = isCBE ? "5965043124068687455" : "4956601935592424315";
           const moneyBagEmojiId = isCBE ? "6267068789146260253" : "4958926882994127612";
           const bankEmojiId = isCBE ? "5931351583827696128" : "5931638668031695373";
