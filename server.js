@@ -651,17 +651,38 @@ app.post("/telegram-webhook", async (req, res) => {
 
       const isMember = await checkMembership(userId);
       if (!isMember) {
+        const joinText = `⚠️ቦቱን ለመጠቀም መጀመሪያ ቻናላችንን መቀላቀል አለብዎት!\n\n👇እባክዎ ከታች ያለውን ሊንክ ተጭነው ቻናሉን ከተቀላቀሉ በኋላ «✅ ተቀላቅያለሁ (Check)» የሚለውን ይጫኑ፡-`;
+        const joinEntities = [
+          { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5447644880824181073" },
+          { offset: 2, length: 35, type: "bold" },
+          { offset: 39, length: 2, type: "custom_emoji", custom_emoji_id: "5231102735817918643" },
+          { offset: 81, length: 1, type: "custom_emoji", custom_emoji_id: "4958610528588008305" },
+          { offset: 82, length: 19, type: "bold" }
+        ];
+
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: userId,
-            text: `👋 <b>እንኳን ወደ Unique P2P በደህና መጡ!</b>\n\nቦቱን ለመጠቀም እባክዎ መጀመሪያ ቻናላችንን ይቀላቀሉ፦`,
-            parse_mode: "HTML",
+            text: joinText,
+            entities: joinEntities,
             reply_markup: {
               inline_keyboard: [
-                [{ text: "📢 ቻናል ተቀላቀል (@Unique_techs)", url: "https://t.me/Unique_techs" }],
-                [{ text: "✅ ተቀላቅያለሁ (Verify)", callback_data: "check_join" }]
+                [
+                  {
+                    text: "ቻናል ተቀላቀል (@Unique_techs)",
+                    icon_custom_emoji_id: "6267129592998270736",
+                    url: "https://t.me/Unique_techs"
+                  }
+                ],
+                [
+                  {
+                    text: "ተቀላቅያለሁ (Check)",
+                    icon_custom_emoji_id: "4958610528588008305",
+                    callback_data: "check_join"
+                  }
+                ]
               ]
             }
           })
@@ -1032,8 +1053,14 @@ app.post("/telegram-webhook", async (req, res) => {
 
         const netKeyboard = {
           inline_keyboard: [
-            [{ text: "Binance Pay UID", callback_data: "net:binance" }, { text: "BEP-20 (BSC)", callback_data: "net:bep20" }],
-            [{ text: "TON Network", callback_data: "net:ton" }, { text: "Litecoin (LTC)", callback_data: "net:ltc" }]
+            [
+              { text: "Binance Uid", icon_custom_emoji_id: "5931458068951865704", callback_data: "net:binance" },
+              { text: "Bep20", icon_custom_emoji_id: "5397896059886253421", callback_data: "net:bep20" }
+            ],
+            [
+              { text: "Ton Network", icon_custom_emoji_id: "5359320566304096699", callback_data: "net:ton" },
+              { text: "LiteCoin (Ltc)", icon_custom_emoji_id: "5829979991886011025", callback_data: "net:ltc" }
+            ]
           ]
         };
 
@@ -1313,10 +1340,64 @@ app.post("/telegram-webhook", async (req, res) => {
       if (callbackData === "check_join") {
         const isMember = await checkMembership(cbUserId);
         if (isMember) {
-          await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "🎉 እንኳን ደህና መጡ!" }) });
-          await sendMainMenu(cbUserId, "✅ ቻናሉ ተረጋግጧል! ንግድ ለመጀመር ከስር ካሉት አንዱን ይምረጡ፦");
+          await telegram("answerCallbackQuery", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ callback_query_id: callback.id, text: "🎉 እንኳን ደህና መጡ!" })
+          });
+
+          // 1. የ Force Join መልዕክቱን ያጠፋዋል
+          if (callback.message?.message_id) {
+            try {
+              await telegram("deleteMessage", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  chat_id: cbUserId,
+                  message_id: callback.message.message_id
+                })
+              });
+            } catch (e) {
+              console.error("Delete force join msg error:", e.message);
+            }
+          }
+
+          // 2. "እንኳን ደህና መጡ!" የሚለውን መልዕክት ይልካል
+          const joinedSuccessText = "🎉 እንኳን ደህና መጡ! ቻናሉን በተሳካ ሁኔታ ተቀላቅለዋል።";
+          await telegram("sendMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: cbUserId,
+              text: joinedSuccessText,
+              entities: [
+                { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039529134078821602" },
+                { offset: 3, length: joinedSuccessText.length - 3, type: "bold" }
+              ]
+            })
+          });
+
+          // 3. ከታች ዋናውን Welcome Banner እና ዋናውን ሜኑ ኪቦርድ ይልካል
+          const welcomeCaption = "🔥 እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!↔️\n\n ደህንነቱ የተጠበቀ🛡 እና እጅግ ፈጣን የ USDT💵 መገበያያ ቤት!⚡️\n\n ⬇️ የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-";
+          const welcomeEntities = await buildCustomEmojiEntities(welcomeCaption);
+
+          await telegram("sendPhoto", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: cbUserId,
+              photo: BANNER_IMAGE_URL,
+              caption: welcomeCaption,
+              caption_entities: welcomeEntities,
+              reply_markup: mainMenuKeyboard
+            })
+          });
         } else {
-          await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "⚠️ ቻናሉን አልተቀላቀሉም!", show_alert: true }) });
+          await telegram("answerCallbackQuery", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ callback_query_id: callback.id, text: "⚠️ ቻናሉን ገና አልተቀላቀሉም! መጀመሪያ ተቀላቀሉ።", show_alert: true })
+          });
         }
         return;
       }
@@ -1335,8 +1416,12 @@ app.post("/telegram-webhook", async (req, res) => {
 
           const methodKeyboard = {
             inline_keyboard: [
-              [{ text: "📱 ቴሌብር (Telebirr)", callback_data: "pay:Telebirr" }],
-              [{ text: "🏦 ንግድ ባንክ (CBE)", callback_data: "pay:CBE" }]
+              [
+                { text: "ቴሌብር (Telebirr)", icon_custom_emoji_id: "5805526032945519867", callback_data: "pay:Telebirr" }
+              ],
+              [
+                { text: "ንግድ ባንክ (CBE)", icon_custom_emoji_id: "5805572156599312646", callback_data: "pay:CBE" }
+              ]
             ]
           };
 
