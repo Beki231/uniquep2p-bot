@@ -299,9 +299,9 @@ async function checkMembership(userId) {
 
 const mainMenuKeyboard = {
   keyboard: [
-    [{ text: "💵 USDT መሸጥ" }, { text: "🛒 USDT መግዛት" }],
+    [{ text: "🔴 USDT መሸጥ" }, { text: "🟢 USDT መግዛት" }],
     [{ text: "📊 የዛሬ ተመን" }, { text: "📜 የትዕዛዝ ታሪክ" }],
-    [{ text: "📞 ድጋፍ / አድሚን" }]
+    [{ text: "🧑‍💻 ድጋፍ / አድሚን" }]
   ],
   resize_keyboard: true
 };
@@ -837,7 +837,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      if (text === "🛒 USDT መግዛት") {
+      if (text === "🟢 USDT መግዛት") {
         const buyText =
           `🔼 USDT መግዛት\n` +
           `━━━━━━━━━━━━━━━━━━━\n` +
@@ -941,7 +941,9 @@ app.post("/telegram-webhook", async (req, res) => {
             addTextWithEmoji(" ");
             addTextWithEmoji("ጸድቋል", null, true);
           } else if (o.status === "declined") {
-            addTextWithEmoji("❌ ውድቅ", null, true);
+            addTextWithEmoji("❌", "4958526153955476488");
+            addTextWithEmoji(" ");
+            addTextWithEmoji("ውድቅ", null, true);
           } else {
             addTextWithEmoji("⌛", "6267229004311303657");
             addTextWithEmoji(" ");
@@ -963,7 +965,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      if (text === "📞 ድጋፍ / አድሚን") {
+      if (text === "🧑‍💻 ድጋፍ / አድሚን") {
         const supportText = 
           `👨‍💻የደንበኞች ድጋፍ እና ማህበረሰብ\n` +
           `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -1000,7 +1002,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      if (text === "💵 USDT መሸጥ") {
+      if (text === "🔴 USDT መሸጥ") {
         const botSettings = await Settings.findOne({ key: "v2_settings" });
         if (botSettings && botSettings.isPaused) {
           await telegram("sendMessage", {
