@@ -767,24 +767,93 @@ app.post("/telegram-webhook", async (req, res) => {
     if (text === "📜 የትዕዛዝ ታሪክ") {
       const orders = await Order.find({ userId }).sort({ createdAt: -1 }).limit(5);
       if (!orders || orders.length === 0) {
+        const emptyText = "📣 እስካሁን ምንም ዓይነት ትዕዛዝ አልፈጸሙም!";
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: userId, text: "📜 እስካሁን ምንም የተመዘገበ ትዕዛዝ የለዎትም።" })
+          body: JSON.stringify({
+            chat_id: userId,
+            text: emptyText,
+            entities: [
+              { type: "custom_emoji", offset: 0, length: 2, custom_emoji_id: "6267129592998270736" }
+            ]
+          })
         });
         return;
       }
 
-      let historyText = `📜 <b>የቅርብ ጊዜ የትዕዛዝ ታሪክዎ፦</b>\n━━━━━━━━━━━━━━━━━━\n`;
+      let historyText = "";
+      const historyEntities = [];
+
+      const addTextWithEmoji = (str, customEmojiId = null, isBold = false) => {
+        const offset = historyText.length;
+        historyText += str;
+        if (customEmojiId) {
+          historyEntities.push({
+            type: "custom_emoji",
+            offset,
+            length: str.length,
+            custom_emoji_id: customEmojiId
+          });
+        }
+        if (isBold) {
+          historyEntities.push({
+            type: "bold",
+            offset,
+            length: str.length
+          });
+        }
+      };
+
+      // ርዕስ
+      addTextWithEmoji("🕯", "4956492465465984073");
+      addTextWithEmoji(" ");
+      addTextWithEmoji("የቅርብ ጊዜ የትዕዛዝ ታሪክዎ፦", null, true);
+      addTextWithEmoji("\n━━━━━━━━━━━━━━━━━━\n");
+
       orders.forEach(o => {
-        const statusEmoji = o.status === "approved" ? "✅ ጸድቋል" : o.status === "declined" ? "❌ ውድቅ" : "⏳ በሂደት";
-        historyText += `💵 <b>${o.amount} USDT</b> (${Number(o.total || 0).toLocaleString()} ETB)\n🏦 ዘዴ: ${o.method} | ሁኔታ: <b>${statusEmoji}</b>\n━━━━━━━━━━━━━━━━━━\n`;
+        // መጠን
+        addTextWithEmoji("💵", "5040025580758631490");
+        addTextWithEmoji(" ");
+        addTextWithEmoji(`${o.amount} USDT`, null, true);
+        addTextWithEmoji(` (${Number(o.total || 0).toLocaleString()} ETB)\n`);
+
+        // ዘዴ (Telebirr vs CBE ሎጎ)
+        addTextWithEmoji("📌", "5039600026809009149");
+        addTextWithEmoji(` ዘዴ: ${o.method}`);
+        if (o.method === "Telebirr") {
+          addTextWithEmoji("🏦", "5805526032945519867");
+        } else if (o.method === "CBE") {
+          addTextWithEmoji("🏦", "5805572156599312646");
+        } else {
+          addTextWithEmoji("🏦");
+        }
+
+        // ሁኔታ (Approved / Declined / Pending)
+        addTextWithEmoji(" | ሁኔታ: ");
+        if (o.status === "approved") {
+          addTextWithEmoji("✔️", "5039844895779455925");
+          addTextWithEmoji(" ");
+          addTextWithEmoji("ጸድቋል", null, true);
+        } else if (o.status === "declined") {
+          addTextWithEmoji("❌ ውድቅ", null, true);
+        } else {
+          addTextWithEmoji("⌛", "6267229004311303657");
+          addTextWithEmoji(" ");
+          addTextWithEmoji("በሂደት", null, true);
+        }
+
+        addTextWithEmoji("\n━━━━━━━━━━━━━━━━━━\n");
       });
 
       await telegram("sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: userId, text: historyText, parse_mode: "HTML" })
+        body: JSON.stringify({
+          chat_id: userId,
+          text: historyText,
+          entities: historyEntities
+        })
       });
       return;
     }
