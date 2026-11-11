@@ -365,7 +365,7 @@ app.post("/telegram-webhook", async (req, res) => {
             { offset: userMsg.indexOf(headerStr), length: headerStr.length, type: "bold" },
             { offset: userMsg.indexOf(amountStr), length: amountStr.length, type: "bold" },
             { offset: userMsg.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
-            { offset: userMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" },
+            { offset: userMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
             { offset: userMsg.indexOf("🍾"), length: 2, type: "custom_emoji", custom_emoji_id: "5042274086332400375" },
             { offset: userMsg.indexOf(totalStr), length: totalStr.length, type: "bold" },
             { offset: userMsg.indexOf("🏦"), length: 2, type: "custom_emoji", custom_emoji_id: bankEmojiId },
@@ -670,7 +670,7 @@ app.post("/telegram-webhook", async (req, res) => {
             { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5447644880824181073" },
             { offset: 2, length: 35, type: "bold" },
             { offset: 39, length: 2, type: "custom_emoji", custom_emoji_id: "5231102735817918643" },
-            { offset: 81, length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" },
+            { offset: 81, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
             { offset: 82, length: 19, type: "bold" }
           ];
 
@@ -693,7 +693,7 @@ app.post("/telegram-webhook", async (req, res) => {
                   [
                     {
                       text: "ተቀላቅያለሁ (Check)",
-                      icon_custom_emoji_id: "6266967801580231067",
+                      icon_custom_emoji_id: "6267008582294705964",
                       callback_data: "check_join"
                     }
                   ]
@@ -707,7 +707,7 @@ app.post("/telegram-webhook", async (req, res) => {
 
       const text = msg.text ? msg.text.trim() : "";
 
-      if (text === "/start" || text === "❌ ሰርዝ (Cancel)") {
+      if (text.startsWith("/start") || text === "❌ ሰርዝ (Cancel)") {
         user.step = "idle";
         user.tempOrder = {};
         await user.save();
@@ -744,7 +744,7 @@ app.post("/telegram-webhook", async (req, res) => {
             chat_id: userId,
             text: backConfirmText,
             entities: [
-              { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" },
+              { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
               { offset: 2, length: backConfirmText.length - 2, type: "bold" }
             ]
           })
@@ -796,25 +796,25 @@ app.post("/telegram-webhook", async (req, res) => {
         addRatePart("የዛሬ የ USDT መሸጫ ዋጋዎች፦", null, true);
         addRatePart("\n━━━━━━━━━━━━━━━━━━\n");
 
-        addRatePart("✅", "6266967801580231067");
+        addRatePart("✅", "6267008582294705964");
         addRatePart(" 0.5 - 0.9 ");
         addRatePart("💵", "5040025580758631490");
         addRatePart(` ${exchangeRates.tier1} ETB`, null, true);
         addRatePart("\n");
 
-        addRatePart("✅", "6266967801580231067");
+        addRatePart("✅", "6267008582294705964");
         addRatePart(" 1.0 - 10 ");
         addRatePart("💵", "5040025580758631490");
         addRatePart(` ${exchangeRates.tier2} ETB`, null, true);
         addRatePart("\n");
 
-        addRatePart("✅", "6266967801580231067");
+        addRatePart("✅", "6267008582294705964");
         addRatePart(" 11 - 30 ");
         addRatePart("💵", "5040025580758631490");
         addRatePart(` ${exchangeRates.tier3} ETB`, null, true);
         addRatePart("\n");
 
-        addRatePart("✅", "6266967801580231067");
+        addRatePart("✅", "6267008582294705964");
         addRatePart(" 31+      ");
         addRatePart("💵", "4956601935592424315");
         addRatePart(`  ${exchangeRates.tier4} ETB (ምርጥ ተመን)`, null, true);
@@ -979,12 +979,12 @@ app.post("/telegram-webhook", async (req, res) => {
           { offset: 55, length: 44, type: "bold" },
           { offset: 101, length: 2, type: "custom_emoji", custom_emoji_id: "6264720734820505831" },
           { offset: 104, length: 14, type: "bold" },
-          { offset: 126, length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" },
+          { offset: 126, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
           { offset: 128, length: 8, type: "bold" },
           { offset: 152, length: 1, type: "custom_emoji", custom_emoji_id: "6285240160120477644" },
           { offset: 153, length: 7, type: "bold" },
           { offset: 161, length: 15, type: "italic" },
-          { offset: 176, length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" }
+          { offset: 176, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" }
         ];
 
         await telegram("sendMessage", {
@@ -1046,25 +1046,25 @@ app.post("/telegram-webhook", async (req, res) => {
         addSellPart(" የዛሬ የመሸጫ ተመኖች (Rates)፦", null, true);
         addSellPart("\n\n");
 
-        addSellPart("✅", "6266967801580231067");
+        addSellPart("✅", "6267008582294705964");
         addSellPart("0.5 - 0.9");
         addSellPart("💵", "5409048419211682843");
         addSellPart(`${exchangeRates.tier1} ETB`, null, true);
         addSellPart("\n");
 
-        addSellPart("✅", "6266967801580231067");
+        addSellPart("✅", "6267008582294705964");
         addSellPart("1.0 - 10 ");
         addSellPart("💵", "5409048419211682843");
         addSellPart(`${exchangeRates.tier2} ETB`, null, true);
         addSellPart("\n");
 
-        addSellPart("✅", "6266967801580231067");
+        addSellPart("✅", "6267008582294705964");
         addSellPart(" 11 - 30 ");
         addSellPart("💵", "5409048419211682843");
         addSellPart(` ${exchangeRates.tier3} ETB`, null, true);
         addSellPart("\n");
 
-        addSellPart("✅", "6266967801580231067");
+        addSellPart("✅", "6267008582294705964");
         addSellPart(" 31+      ");
         addSellPart("💵", "5409048419211682843");
         addSellPart(`  ${exchangeRates.tier4} ETB`, null, true);
@@ -1076,7 +1076,7 @@ app.post("/telegram-webhook", async (req, res) => {
 
         addSellPart("👇", "5231102735817918643");
         addSellPart(" ለመቀጠል «");
-        addSellPart("✅", "6266967801580231067");
+        addSellPart("✅", "6267008582294705964");
         addSellPart("ተስማምቻለሁ", null, true);
         addSellPart("» የሚለውን ይጫኑ፡-");
 
@@ -1244,7 +1244,7 @@ app.post("/telegram-webhook", async (req, res) => {
         const label = "የአካውንቱን ሙሉ ስም ያስገቡ፦";
         const namePromptText = `✅ ${label}`;
         const namePromptEntities = [
-          { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" },
+          { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
           { offset: namePromptText.indexOf(label), length: label.length, type: "bold" }
         ];
 
@@ -1279,7 +1279,7 @@ app.post("/telegram-webhook", async (req, res) => {
         const stepSub = "(Screenshot ፎቶ)";
         const ssPromptText = `✅${stepTitle}\n\nየላኩበትን ደረሰኝ🗓 ${stepSub} አሁን ይላኩ፦`;
         const ssPromptEntities = [
-          { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" },
+          { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
           { offset: ssPromptText.indexOf(stepTitle), length: stepTitle.length, type: "bold" },
           { offset: ssPromptText.indexOf("🗓"), length: 2, type: "custom_emoji", custom_emoji_id: "4956214413578207998" },
           { offset: ssPromptText.indexOf(stepSub), length: stepSub.length, type: "bold" }
@@ -1333,7 +1333,7 @@ app.post("/telegram-webhook", async (req, res) => {
           await user.save();
 
           const isCBE = orderData.method === "CBE";
-          const topCheckId = "6266967801580231067";
+          const topCheckId = "6267008582294705964";
           const dollarEmojiId = isCBE ? "5965043124068687455" : "4956601935592424315";
           const moneyBagEmojiId = isCBE ? "6267068789146260253" : "4958926882994127612";
           const bankEmojiId = isCBE ? "5931351583827696128" : "5931638668031695373";
@@ -1366,7 +1366,7 @@ app.post("/telegram-webhook", async (req, res) => {
             { offset: orderSuccessText.indexOf("🏦"), length: 2, type: "custom_emoji", custom_emoji_id: bankEmojiId },
             { offset: orderSuccessText.lastIndexOf(accStr), length: accStr.length, type: "code" },
             { offset: orderSuccessText.indexOf(footerNote), length: footerNote.length, type: "italic" },
-            { offset: orderSuccessText.lastIndexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" }
+            { offset: orderSuccessText.lastIndexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" }
           ];
 
           await telegram("sendMessage", {
@@ -1686,7 +1686,7 @@ app.post("/telegram-webhook", async (req, res) => {
           const quickEntities = [
             { offset: quickMsg.indexOf(amountStr), length: amountStr.length, type: "bold" },
             { offset: quickMsg.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5965043124068687455" },
-            { offset: quickMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" },
+            { offset: quickMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
             { offset: quickMsg.indexOf("🍾"), length: 2, type: "custom_emoji", custom_emoji_id: "5042274086332400375" },
             { offset: quickMsg.indexOf(totalStr), length: totalStr.length, type: "bold" },
             { offset: quickMsg.indexOf("🏦"), length: 2, type: "custom_emoji", custom_emoji_id: bankEmojiId },
