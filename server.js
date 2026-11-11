@@ -581,10 +581,17 @@ app.post("/telegram-webhook", async (req, res) => {
       user.tempOrder = {};
       await user.save();
 
-      const welcomeText = 
-        `<tg-emoji emoji-id="5039644681583985437">🔥</tg-emoji> <b>እንኳን ወደ Unique P2P Store<tg-emoji emoji-id="5911078333168227043">🇪🇹</tg-emoji> በደህና መጡ!</b><tg-emoji emoji-id="5271837459783638319">↔️</tg-emoji>\n\n` +
-        `<b>ደህንነቱ የተጠበቀ<tg-emoji emoji-id="5197288647275071607">🛡</tg-emoji> እና እጅግ ፈጣን የ USDT<tg-emoji emoji-id="5040025580758631490">💵</tg-emoji> መገበያያ ቤት!</b><tg-emoji emoji-id="5456140674028019486">⚡️</tg-emoji>\n\n` +
-        `<tg-emoji emoji-id="5406745015365943482">⬇️</tg-emoji> <b>የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-</b>`;
+      const welcomeCaption = "🔥 እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!↔️\n\n ደህንነቱ የተጠበቀ🛡 እና እጅግ ፈጣን የ USDT💵 መገበያያ ቤት!⚡️\n\n ⬇️ የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-";
+
+      const welcomeEntities = [
+        { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039644681583985437" },
+        { offset: 27, length: 4, type: "custom_emoji", custom_emoji_id: "5911078333168227043" },
+        { offset: 40, length: 2, type: "custom_emoji", custom_emoji_id: "5271837459783638319" },
+        { offset: 56, length: 2, type: "custom_emoji", custom_emoji_id: "5197288647275071607" },
+        { offset: 76, length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
+        { offset: 88, length: 2, type: "custom_emoji", custom_emoji_id: "5456140674028019486" },
+        { offset: 93, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" }
+      ];
 
       await telegram("sendPhoto", {
         method: "POST",
@@ -592,8 +599,8 @@ app.post("/telegram-webhook", async (req, res) => {
         body: JSON.stringify({
           chat_id: userId,
           photo: BANNER_IMAGE_URL,
-          caption: welcomeText,
-          parse_mode: "HTML",
+          caption: welcomeCaption,
+          caption_entities: welcomeEntities,
           reply_markup: mainMenuKeyboard
         })
       });
