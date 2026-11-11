@@ -71,39 +71,100 @@ let pendingReceiptOrder = null;
 const cryptoNetworks = {
   binance: {
     name: "Binance Pay UID",
-    caption:
-      `🌐 <b>የመረጡት ኔትወርክ:</b> Binance Pay UID\n\n` +
-      `📬 <b>የመላኪያ አድራሻ:</b>👇\n\n` +
-      `🆔 <b>Binance UID :</b> <code>1182277662</code>\n` +
-      `👤 <b>Nickname :</b> <code>UniqueTech</code>\n\n` +
-      `👇 <b>USDT ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦</b>`
+    text:
+      `🗓የመረጡት ኔትወርክ: Binance Pay🤪\n\n` +
+      `📊 የመላኪያ አድራሻ:⬇️\n\n` +
+      `🖥 Binance UID : 1182277662\n` +
+      `👤 Nickname : UniqueTech\n\n` +
+      `⬇️ USDT ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦`,
+    entities: [
+      { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5413879192267805083" },
+      { offset: 2, length: 14, type: "bold" },
+      { offset: 26, length: 2, type: "custom_emoji", custom_emoji_id: "6235497455215973322" },
+      { offset: 30, length: 2, type: "custom_emoji", custom_emoji_id: "5231200819986047254" },
+      { offset: 33, length: 11, type: "bold" },
+      { offset: 44, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+      { offset: 48, length: 2, type: "custom_emoji", custom_emoji_id: "5282843764451195532" },
+      { offset: 51, length: 13, type: "bold" },
+      { offset: 65, length: 10, type: "code" },
+      { offset: 76, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+      { offset: 79, length: 10, type: "bold" },
+      { offset: 90, length: 10, type: "code" },
+      { offset: 102, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+      { offset: 105, length: 34, type: "bold" }
+    ]
   },
   bep20: {
     name: "BEP-20 (BSC)",
-    caption:
-      `🌐 <b>የመረጡት ኔትወርክ:</b> BEP-20 (BSC)\n\n` +
-      `📬 <b>የመላኪያ አድራሻ:</b>👇\n\n` +
-      `🪎 <b>Address :</b> <code>0xdc6bffaecee233cb3a1b41513349fd4cf842a486</code>\n\n` +
-      `👆 <i>Address በመንካት Copy አርጉ</i>\n\n` +
-      `👇 <b>USDT ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦</b>`
+    text:
+      `🗓 የመረጡት ኔትወርክ: BEP-20🔶\n\n` +
+      `📊 የመላኪያ አድራሻ:⬇️\n\n` +
+      `🕯 Address : 0xdc6bffaecee233cb3a1b41513349fd4cf842a486\n\n` +
+      `👆 Address በመንካት Copy አርጉ\n\n` +
+      `⬇️ USDT ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦`,
+    entities: [
+      { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5413879192267805083" },
+      { offset: 3, length: 14, type: "bold" },
+      { offset: 22, length: 2, type: "custom_emoji", custom_emoji_id: "5291786530606562380" },
+      { offset: 26, length: 2, type: "custom_emoji", custom_emoji_id: "5231200819986047254" },
+      { offset: 29, length: 11, type: "bold" },
+      { offset: 40, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+      { offset: 44, length: 2, type: "custom_emoji", custom_emoji_id: "5451882707875276247" },
+      { offset: 47, length: 9, type: "bold" },
+      { offset: 57, length: 42, type: "code" },
+      { offset: 101, length: 2, type: "custom_emoji", custom_emoji_id: "5469718869536940860" },
+      { offset: 104, length: 22, type: "italic" },
+      { offset: 128, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+      { offset: 131, length: 34, type: "bold" }
+    ]
   },
   ton: {
     name: "TON Network",
-    caption:
-      `🌐 <b>የመረጡት ኔትወርክ:</b> TON Network\n\n` +
-      `📬 <b>የመላኪያ አድራሻ:</b>👇\n\n` +
-      `🪎 <b>Address :</b> <code>UQBnagfOnShZYOgwPOfCy5Jx5dr80D9p4laxNvORleI4YT9j</code>\n\n` +
-      `👆 <i>Address በመንካት Copy አርጉ</i>\n\n` +
-      `👇 <b>ክሪፕቶውን ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦</b>`
+    text:
+      `🗓 የመረጡት ኔትወርክ: TON📱\n\n` +
+      `📊 የመላኪያ አድራሻ:⬇️\n\n` +
+      `🕯 Address : UQBnagfOnShZYOgwPOfCy5Jx5dr80D9p4laxNvORleI4YT9j\n\n` +
+      `👆 Address በመንካት Copy አርጉ\n\n` +
+      `⬇️ USDT ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦`,
+    entities: [
+      { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5413879192267805083" },
+      { offset: 3, length: 14, type: "bold" },
+      { offset: 19, length: 2, type: "custom_emoji", custom_emoji_id: "5359320566304096699" },
+      { offset: 23, length: 2, type: "custom_emoji", custom_emoji_id: "5931485612577136501" },
+      { offset: 26, length: 11, type: "bold" },
+      { offset: 37, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+      { offset: 41, length: 2, type: "custom_emoji", custom_emoji_id: "5451882707875276247" },
+      { offset: 44, length: 9, type: "bold" },
+      { offset: 54, length: 48, type: "code" },
+      { offset: 104, length: 2, type: "custom_emoji", custom_emoji_id: "5469718869536940860" },
+      { offset: 107, length: 22, type: "italic" },
+      { offset: 131, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+      { offset: 134, length: 34, type: "bold" }
+    ]
   },
   ltc: {
     name: "Litecoin (LTC)",
-    caption:
-      `🌐 <b>የመረጡት ኔትወርክ:</b> Litecoin (LTC)\n\n` +
-      `📬 <b>የመላኪያ አድራሻ:</b>👇\n\n` +
-      `🪎 <b>Address :</b> <code>LMSESUBB5Ee9JschXusNrqKTQjMSr4d6sc</code>\n\n` +
-      `👆 <i>Address በመንካት Copy አርጉ</i>\n\n` +
-      `👇 <b>ክሪፕቶውን ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦</b>`
+    text:
+      `🗓 የመረጡት ኔትወርክ: LTC🪙\n\n` +
+      `📊 የመላኪያ አድራሻ:⬇️\n\n` +
+      `🕯 Address : LMSESUBB5Ee9JschXusNrqKTQjMSr4d6sc\n\n` +
+      `👆 Address በመንካት Copy አርጉ\n\n` +
+      `⬇️ USDT ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦`,
+    entities: [
+      { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5413879192267805083" },
+      { offset: 3, length: 14, type: "bold" },
+      { offset: 19, length: 2, type: "custom_emoji", custom_emoji_id: "5829979991886011025" },
+      { offset: 23, length: 2, type: "custom_emoji", custom_emoji_id: "5231200819986047254" },
+      { offset: 26, length: 11, type: "bold" },
+      { offset: 37, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+      { offset: 41, length: 2, type: "custom_emoji", custom_emoji_id: "5451882707875276247" },
+      { offset: 44, length: 9, type: "bold" },
+      { offset: 54, length: 34, type: "code" },
+      { offset: 90, length: 2, type: "custom_emoji", custom_emoji_id: "5469718869536940860" },
+      { offset: 93, length: 22, type: "italic" },
+      { offset: 117, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+      { offset: 120, length: 34, type: "bold" }
+    ]
   }
 };
 
@@ -744,7 +805,7 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-        if (text === "🛒 USDT መግዛት") {
+    if (text === "🛒 USDT መግዛት") {
       const buyText =
         `🔼 USDT መግዛት\n` +
         `━━━━━━━━━━━━━━━━━━━\n` +
@@ -870,7 +931,7 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-        if (text === "📞 ድጋፍ / አድሚን") {
+    if (text === "📞 ድጋፍ / አድሚን") {
       const supportText = 
         `👨‍💻የደንበኞች ድጋፍ እና ማህበረሰብ\n` +
         `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -906,7 +967,6 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-
     if (text === "💵 USDT መሸጥ") {
       const botSettings = await Settings.findOne({ key: "v2_settings" });
       if (botSettings && botSettings.isPaused) {
@@ -922,13 +982,21 @@ app.post("/telegram-webhook", async (req, res) => {
       user.tempOrder = {};
       await user.save();
 
+      const sellPromptText = `💰 የሚሸጡትን የ USDT መጠን ያስገቡ፦\n\n🚫ዝቅተኛው መጠን 0.5 USDT ነው`;
+      const sellPromptEntities = [
+        { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039789890133296083" },
+        { offset: 3, length: 23, type: "bold" },
+        { offset: 28, length: 2, type: "custom_emoji", custom_emoji_id: "5039671744172917707" },
+        { offset: 30, length: 21, type: "italic" }
+      ];
+
       await telegram("sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: userId,
-          text: `<b>💵 የሚሸጡትን የ USDT መጠን ያስገቡ፦</b>\n\n<i>ዝቅተኛው መጠን 0.5 USDT ነው</i>`,
-          parse_mode: "HTML",
+          text: sellPromptText,
+          entities: sellPromptEntities,
           reply_markup: { keyboard: [[{ text: "❌ ሰርዝ (Cancel)" }]], resize_keyboard: true }
         })
       });
@@ -961,13 +1029,31 @@ app.post("/telegram-webhook", async (req, res) => {
         ]
       };
 
+      const summaryText =
+        `🔥 መጠን: ${amt} USDT\n` +
+        `🕯 ተመን: 1 USDT = ${rate} ETB\n` +
+        `💰 የሚቀበሉት ድምር: ${total.toLocaleString()} ETB\n\n` +
+        `⬇️ USDT የሚልኩበትን ኔትወርክ ይምረጡ፦`;
+
+      const summaryEntities = [
+        { offset: summaryText.indexOf("🔥"), length: 2, type: "custom_emoji", custom_emoji_id: "4956499161319998529" },
+        { offset: summaryText.indexOf("መጠን:"), length: 5, type: "bold" },
+        { offset: summaryText.indexOf("🕯"), length: 2, type: "custom_emoji", custom_emoji_id: "4956492465465984073" },
+        { offset: summaryText.indexOf("ተመን:"), length: 5, type: "bold" },
+        { offset: summaryText.indexOf("💰"), length: 2, type: "custom_emoji", custom_emoji_id: "4958926882994127612" },
+        { offset: summaryText.indexOf("የሚቀበሉት ድምር:"), length: 13, type: "bold" },
+        { offset: summaryText.indexOf(`${total.toLocaleString()} ETB`), length: `${total.toLocaleString()} ETB`.length, type: "bold" },
+        { offset: summaryText.indexOf("⬇️"), length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+        { offset: summaryText.indexOf("USDT የሚልኩበትን"), length: 27, type: "bold" }
+      ];
+
       await telegram("sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: userId,
-          text: `📊 <b>መጠን:</b> ${amt} USDT\n📈 <b>ተመን:</b> 1 USDT = ${rate} ETB\n💰 <b>የሚቀበሉት ድምር:</b> <b>${total.toLocaleString()} ETB</b>\n\n👇 <b>USDT የሚልኩበትን ኔትወርክ ይምረጡ፦</b>`,
-          parse_mode: "HTML",
+          text: summaryText,
+          entities: summaryEntities,
           reply_markup: netKeyboard
         })
       });
@@ -1000,10 +1086,20 @@ app.post("/telegram-webhook", async (req, res) => {
       user.step = "awaiting_name";
       await user.save();
 
+      const namePromptText = `✅ የአካውንቱን ሙሉ ስም ያስገቡ፦`;
+      const namePromptEntities = [
+        { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6217663806110175239" },
+        { offset: 2, length: 22, type: "bold" }
+      ];
+
       await telegram("sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: userId, text: "👤 <b>የአካውንቱን ባለቤት ሙሉ ስም ያስገቡ፦</b>", parse_mode: "HTML" })
+        body: JSON.stringify({
+          chat_id: userId,
+          text: namePromptText,
+          entities: namePromptEntities
+        })
       });
       return;
     }
@@ -1023,13 +1119,21 @@ app.post("/telegram-webhook", async (req, res) => {
       user.step = "awaiting_screenshot";
       await user.save();
 
+      const ssPromptText = `✅የመጨረሻ ደረጃ፦\n\nየላኩበትን ደረሰኝ🗓 (Screenshot ፎቶ) አሁን ይላኩ፦`;
+      const ssPromptEntities = [
+        { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
+        { offset: 1, length: 12, type: "bold" },
+        { offset: 24, length: 2, type: "custom_emoji", custom_emoji_id: "4956214413578207998" },
+        { offset: 27, length: 17, type: "bold" }
+      ];
+
       await telegram("sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: userId,
-          text: `📸 <b>የመጨረሻ ደረጃ፦</b>\n\nየላኩበትን <b>ደረሰኝ (Screenshot ፎቶ)</b> አሁን ይላኩ፦`,
-          parse_mode: "HTML"
+          text: ssPromptText,
+          entities: ssPromptEntities
         })
       });
       return;
@@ -1169,8 +1273,8 @@ app.post("/telegram-webhook", async (req, res) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: cbUserId,
-            text: selectedNet.caption,
-            parse_mode: "HTML",
+            text: selectedNet.text,
+            entities: selectedNet.entities,
             reply_markup: methodKeyboard
           })
         });
@@ -1190,13 +1294,31 @@ app.post("/telegram-webhook", async (req, res) => {
         await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id }) });
 
         const promptText = method === "Telebirr" 
-          ? "📱 <b>የቴሌብር ስልክ ቁጥርዎን ያስገቡ፦</b>\n<i>ለምሳሌ፦ 0912345678</i>"
-          : "🏦 <b>የኢትዮጵያ ንግድ ባንክ (CBE) 13 ድጅት አካውንት ቁጥር ያስገቡ፦</b>";
+          ? `🏦 የቴሌብር ስልክ ቁጥርዎን ያስገቡ፦\n\n✔️ለምሳሌ፦ 0912345678`
+          : `🏦 የኢትዮጵያ ንግድ ባንክ (CBE) 13 ድጅት አካውንት ቁጥር ያስገቡ፦\n\n😬ለምሳሌ:- 1000123456789`;
+
+        const promptEntities = method === "Telebirr"
+          ? [
+              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
+              { offset: 3, length: 21, type: "bold" },
+              { offset: 26, length: 2, type: "custom_emoji", custom_emoji_id: "6217721388736712699" },
+              { offset: 28, length: 5, type: "italic" }
+            ]
+          : [
+              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5931351583827696128" },
+              { offset: 3, length: 43, type: "bold" },
+              { offset: 48, length: 2, type: "custom_emoji", custom_emoji_id: "6217508525862555336" },
+              { offset: 50, length: 5, type: "italic" }
+            ];
 
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: cbUserId, text: promptText, parse_mode: "HTML" })
+          body: JSON.stringify({
+            chat_id: cbUserId,
+            text: promptText,
+            entities: promptEntities
+          })
         });
       }
       return;
