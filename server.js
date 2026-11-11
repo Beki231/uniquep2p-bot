@@ -693,7 +693,7 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-        if (text === "🔙 ወደ ዋናው ሜኑ ተመለስ") {
+    if (text === "🔙 ወደ ዋናው ሜኑ ተመለስ") {
       user.step = "idle";
       user.tempOrder = {};
       await user.save();
@@ -730,7 +730,6 @@ app.post("/telegram-webhook", async (req, res) => {
       });
       return;
     }
-
 
     if (text === "〽️ እንዴት ይሰራል?") {
       const howItWorksText = 
