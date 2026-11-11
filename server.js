@@ -582,9 +582,9 @@ app.post("/telegram-webhook", async (req, res) => {
       await user.save();
 
       const welcomeText = 
-        `👋 <b>እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!</b>\n\n` +
-        `🔐 <b>ደህንነቱ የተጠበቀ እና እጅግ ፈጣን የ USDT መገበያያ ቤት!</b>\n\n` +
-        `👇 <b>ለመገበያየት ከስር ያሉትን አዝራሮች ይጠቀሙ፦</b>`;
+        `<tg-emoji emoji-id="5039644681583985437">🔥</tg-emoji> <b>እንኳን ወደ Unique P2P Store<tg-emoji emoji-id="5911078333168227043">🇪🇹</tg-emoji> በደህና መጡ!</b><tg-emoji emoji-id="5271837459783638319">↔️</tg-emoji>\n\n` +
+        `<b>ደህንነቱ የተጠበቀ<tg-emoji emoji-id="5197288647275071607">🛡</tg-emoji> እና እጅግ ፈጣን የ USDT<tg-emoji emoji-id="5040025580758631490">💵</tg-emoji> መገበያያ ቤት!</b><tg-emoji emoji-id="5456140674028019486">⚡️</tg-emoji>\n\n` +
+        `<tg-emoji emoji-id="5406745015365943482">⬇️</tg-emoji> <b>የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-</b>`;
 
       await telegram("sendPhoto", {
         method: "POST",
