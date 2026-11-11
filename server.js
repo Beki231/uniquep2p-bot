@@ -675,16 +675,71 @@ app.post("/telegram-webhook", async (req, res) => {
 
     if (text === "📊 የዛሬ ተመን") {
       const rateText = 
-        `📈 <b>የዛሬ የ USDT መሸጫ ዋጋዎች፦</b>\n━━━━━━━━━━━━━━━━━━\n` +
-        `🔹 0.5 - 0.9 USDT ➡️ <b>${exchangeRates.tier1} ETB</b>\n` +
-        `🔹 1.0 - 10 USDT ➡️ <b>${exchangeRates.tier2} ETB</b>\n` +
-        `🔹 11 - 30 USDT ➡️ <b>${exchangeRates.tier3} ETB</b>\n` +
-        `🔥 31+ USDT ➡️ <b>${exchangeRates.tier4} ETB (ምርጥ ተመን)</b>\n━━━━━━━━━━━━━━━━━━\n` +
-        `<i>ለመሸጥ "💵 USDT መሸጥ" የሚለውን ይጫኑ!</i>`;
+        `🥳የዛሬ የ USDT መሸጫ ዋጋዎች፦\n` +
+        `━━━━━━━━━━━━━━━━━━\n` +
+        `✅ 0.5 - 0.9💵 ${exchangeRates.tier1} ETB\n` +
+        `✅1.0 - 10 💵 ${exchangeRates.tier2} ETB\n` +
+        `✅ 11 - 30 💵 ${exchangeRates.tier3} ETB\n` +
+        `✅ 31+      💵  ${exchangeRates.tier4} ETB (ምርጥ ተመን)\n` +
+        `━━━━━━━━━━━━━━━━━━\n` +
+        `ለመሸጥ "✔️ USDT መሸጥ" የሚለውን ይጫኑ!`;
+
+      const rateEmojis = [
+        { char: "🥳", id: "6217716209006153211" },
+        { char: "✅", id: "6217663806110175239" },
+        { char: "💵", id: "5040025580758631490" },
+        { char: "✅", id: "6217663806110175239" },
+        { char: "💵", id: "5040025580758631490" },
+        { char: "✅", id: "6217663806110175239" },
+        { char: "💵", id: "5040025580758631490" },
+        { char: "✅", id: "6217663806110175239" },
+        { char: "💵", id: "4956601935592424315" },
+        { char: "✔️", id: "5039844895779455925" }
+      ];
+
+      const rateEntities = [];
+      let searchFrom = 0;
+
+      for (const item of rateEmojis) {
+        const idx = rateText.indexOf(item.char, searchFrom);
+        if (idx !== -1) {
+          rateEntities.push({
+            type: "custom_emoji",
+            offset: idx,
+            length: item.char.length,
+            custom_emoji_id: item.id
+          });
+          searchFrom = idx + item.char.length;
+        }
+      }
+
+      const boldPhrases = [
+        "የዛሬ የ USDT መሸጫ ዋጋዎች፦",
+        `${exchangeRates.tier1} ETB`,
+        `${exchangeRates.tier2} ETB`,
+        `${exchangeRates.tier3} ETB`,
+        `${exchangeRates.tier4} ETB (ምርጥ ተመን)`
+      ];
+
+      for (const phrase of boldPhrases) {
+        const idx = rateText.indexOf(phrase);
+        if (idx !== -1) {
+          rateEntities.push({
+            type: "bold",
+            offset: idx,
+            length: phrase.length
+          });
+        }
+      }
+
       await telegram("sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: userId, text: rateText, parse_mode: "HTML" })
+        body: JSON.stringify({
+          chat_id: userId,
+          text: rateText,
+          entities: rateEntities.sort((a, b) => a.offset - b.offset)
+        })
       });
       return;
     }
