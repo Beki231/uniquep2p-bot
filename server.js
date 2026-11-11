@@ -14,7 +14,6 @@ const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "my_p2p_secret_key";
 const MONGO_URI = process.env.MONGO_URI;
 const BOT_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 const CHANNEL_ID = "@Unique_techs";
-const PROOF_CHANNEL_ID = "@Ut_proof";
 
 const BANNER_IMAGE_URL = "https://i.postimg.cc/L88G59b1/IMG-20261103-102834-245.jpg"; 
 const STATS_BANNER_URL = "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=80";
@@ -44,6 +43,7 @@ const OrderSchema = new mongoose.Schema({
   status: { type: String, enum: ["pending", "approved", "declined"], default: "pending" },
   customerProofFileId: String,
   receiptFileId: String,
+  adminMessageId: Number,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -213,6 +213,23 @@ async function telegram(method, body) {
   return result.result;
 }
 
+async function clearAdminOrderButtons(messageId) {
+  if (!messageId) return;
+  try {
+    await telegram("editMessageReplyMarkup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: ADMIN_CHAT_ID,
+        message_id: messageId,
+        reply_markup: { inline_keyboard: [] }
+      })
+    });
+  } catch (e) {
+    console.error("Clear admin buttons error:", e.message);
+  }
+}
+
 const CUSTOM_EMOJI_IDS = [
   "5039644681583985437",
   "5911078333168227043",
@@ -270,67 +287,17 @@ async function checkMembership(userId) {
   }
 }
 
-async function postProofToChannel(order, receiptPhotoId = null) {
-  try {
-    const rawName = order.userName || "ደንበኛ";
-    const maskedName = rawName.length > 3 ? rawName.substring(0, 3) + "***" : rawName + "***";
-    const proofCaption = 
-      `🎉 <b>የተጠናቀቀ የ P2P ግብይት ማረጋገጫ!</b> ✅\n` +
-      `━━━━━━━━━━━━━━━━━━\n` +
-      `👤 <b>ደንበኛ:</b> ${maskedName}\n` +
-      `💵 <b>የተሸጠው USDT:</b> ${order.amount} USDT\n` +
-      `💰 <b>የተከፈለው ብር:</b> ${Number(order.total || 0).toLocaleString()} ETB\n` +
-      `🏦 <b>የክፍያ መንገድ:</b> ${order.method}\n` +
-      `━━━━━━━━━━━━━━━━━━\n` +
-      `⚡ <i>ደህንነቱ የተጠበቀ ፈጣን P2P ንግድ በ @Unique_techs</i>`;
-
-    const actualReceipt = receiptPhotoId || order.receiptFileId;
-
-    if (order.customerProofFileId && actualReceipt) {
-      await telegram("sendMediaGroup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: PROOF_CHANNEL_ID,
-          media: [
-            { type: "photo", media: String(order.customerProofFileId) },
-            { type: "photo", media: String(actualReceipt), caption: proofCaption, parse_mode: "HTML" }
-          ]
-        })
-      });
-    } else if (actualReceipt || order.customerProofFileId) {
-      await telegram("sendPhoto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: PROOF_CHANNEL_ID,
-          photo: String(actualReceipt || order.customerProofFileId),
-          caption: proofCaption,
-          parse_mode: "HTML"
-        })
-      });
-    } else {
-      await telegram("sendMessage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: PROOF_CHANNEL_ID,
-          text: proofCaption,
-          parse_mode: "HTML"
-        })
-      });
-    }
-  } catch (proofErr) {
-    console.error("Auto post to proof channel error:", proofErr.message);
-  }
-}
-
 const mainMenuKeyboard = {
   keyboard: [
     [{ text: "💵 USDT መሸጥ" }, { text: "🛒 USDT መግዛት" }],
     [{ text: "📊 የዛሬ ተመን" }, { text: "📜 የትዕዛዝ ታሪክ" }],
     [{ text: "〽️ እንዴት ይሰራል?" }, { text: "📞 ድጋፍ / አድሚን" }]
   ],
+  resize_keyboard: true
+};
+
+const backToMainKeyboard = {
+  keyboard: [[{ text: "🔙 ወደ ዋናው ሜኑ ተመለስ" }]],
   resize_keyboard: true
 };
 
@@ -368,6 +335,8 @@ app.post("/telegram-webhook", async (req, res) => {
         const adminReceiptPhotoId = msg.photo[msg.photo.length - 1].file_id;
         order.receiptFileId = adminReceiptPhotoId;
         await order.save();
+
+        await clearAdminOrderButtons(order.adminMessageId);
 
         const bankEmojiId = order.method === "CBE" ? "5805572156599312646" : "5931638668031695373";
         const amountStr = `${order.amount} USDT`;
@@ -407,12 +376,10 @@ app.post("/telegram-webhook", async (req, res) => {
           console.error("User receipt send error:", e.message);
         }
 
-        await postProofToChannel(order, adminReceiptPhotoId);
-
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: msg.chat.id, text: `✅ ደረሰኙ ለተጠቃሚው ተልኳል፤ ወደ ${PROOF_CHANNEL_ID} ተለጥፏል!` })
+          body: JSON.stringify({ chat_id: msg.chat.id, text: `✅ ደረሰኙ ለተጠቃሚው በተሳካ ሁኔታ ተልኳል!` })
         });
 
         pendingReceiptOrder = null;
@@ -708,7 +675,7 @@ app.post("/telegram-webhook", async (req, res) => {
       user.tempOrder = {};
       await user.save();
 
-      const welcomeCaption = "🔥 እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!↔️\n\n ደህንነቱ የተጠበቀ🛡 እና እጅግ ፈጣን የ USDT💵 መገበያያ ቤት!⚡️\n\n ⬇️ የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-";
+      const welcomeCaption = "<b>🔥 እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ</b>!↔️\n\n <b>ደህንነቱ የተጠበቀ🛡 እና እጅግ ፈጣን የ USDT💵 መገበያያ ቤት!</b>⚡️\n\n ⬇️ <b>የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-</b>";
 
       const welcomeEntities = await buildCustomEmojiEntities(welcomeCaption);
 
@@ -723,6 +690,14 @@ app.post("/telegram-webhook", async (req, res) => {
           reply_markup: mainMenuKeyboard
         })
       });
+      return;
+    }
+
+    if (text === "🔙 ወደ ዋናው ሜኑ ተመለስ") {
+      user.step = "idle";
+      user.tempOrder = {};
+      await user.save();
+      await sendMainMenu(userId);
       return;
     }
 
@@ -821,7 +796,8 @@ app.post("/telegram-webhook", async (req, res) => {
         body: JSON.stringify({
           chat_id: userId,
           text: rateText,
-          entities: rateEntities.sort((a, b) => a.offset - b.offset)
+          entities: rateEntities.sort((a, b) => a.offset - b.offset),
+          reply_markup: backToMainKeyboard
         })
       });
       return;
@@ -983,7 +959,8 @@ app.post("/telegram-webhook", async (req, res) => {
         body: JSON.stringify({
           chat_id: userId,
           text: supportText,
-          entities: supportEntities
+          entities: supportEntities,
+          reply_markup: backToMainKeyboard
         })
       });
       return;
@@ -1207,7 +1184,7 @@ app.post("/telegram-webhook", async (req, res) => {
       const orderData = user.tempOrder || {};
 
       try {
-        await Order.create({
+        const newOrder = await Order.create({
           orderId,
           userId,
           userName: orderData.name || msg.from.first_name || "ደንበኛ",
@@ -1299,7 +1276,7 @@ app.post("/telegram-webhook", async (req, res) => {
           ]
         };
 
-        await telegram("sendPhoto", {
+        const sentAdminMsg = await telegram("sendPhoto", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1310,6 +1287,11 @@ app.post("/telegram-webhook", async (req, res) => {
             reply_markup: adminKeyboard
           })
         });
+
+        if (sentAdminMsg && sentAdminMsg.message_id) {
+          newOrder.adminMessageId = sentAdminMsg.message_id;
+          await newOrder.save();
+        }
       } catch (err) {
         console.error("Order save error:", err);
         await telegram("sendMessage", {
@@ -1472,6 +1454,7 @@ app.post("/telegram-webhook", async (req, res) => {
       if (callbackData.startsWith("ban_user:")) {
         const targetId = Number(callbackData.split(":")[1]);
         await User.findOneAndUpdate({ telegramId: targetId }, { isBanned: true });
+        await clearAdminOrderButtons(callback.message?.message_id);
         await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: `User ${targetId} Banned!` }) });
         await telegram("sendMessage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: ADMIN_CHAT_ID, text: `🚫 ተጠቃሚ ${targetId} ታግዷል!` }) });
         return;
@@ -1479,18 +1462,28 @@ app.post("/telegram-webhook", async (req, res) => {
 
       const [action, orderId] = callbackData.split(":");
       const order = await Order.findOne({ orderId });
-      if (!order || order.status !== "pending") return;
+      if (!order || order.status !== "pending") {
+        await clearAdminOrderButtons(callback.message?.message_id);
+        await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "ይህ ትዕዛዝ ቀድሞ ተጠናቋል!" }) });
+        return;
+      }
 
       if (action === "receipt") {
         pendingReceiptOrder = orderId;
+        if (callback.message?.message_id && !order.adminMessageId) {
+          order.adminMessageId = callback.message.message_id;
+          await order.save();
+        }
         await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id }) });
-        await telegram("sendMessage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: ADMIN_CHAT_ID, text: "📸 የከፈሉበትን ደረሰኝ Screenshot አሁን ይላኩ፦" }) });
+        await telegram("sendMessage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: ADMIN_CHAT_ID, text: "📸 የከፈሉበትን ደረሰኝ Screenshot አሁን ይላኩ (ለመሰረዝ /cancel)፦" }) });
         return;
       }
 
       if (action === "quick_approve") {
         order.status = "approved";
         await order.save();
+
+        await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
         const bankEmojiId = order.method === "CBE" ? "5805572156599312646" : "5931638668031695373";
         const amountStr = `${order.amount} USDT`;
@@ -1521,14 +1514,15 @@ app.post("/telegram-webhook", async (req, res) => {
           })
         });
 
-        await postProofToChannel(order);
-        await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "Approved!" }) });
+        await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "✅ Approved!" }) });
         return;
       }
 
       if (action === "decline") {
         order.status = "declined";
         await order.save();
+
+        await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
         const declineMsg = `❌ ትዕዛዝዎ ውድቅ ተደርጓል። ለጥያቄ @Aropc ያነጋግሩ🙂።`;
         const declineEntities = [
@@ -1547,7 +1541,7 @@ app.post("/telegram-webhook", async (req, res) => {
           })
         });
 
-        await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "Declined!" }) });
+        await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "❌ Declined!" }) });
         return;
       }
     }
