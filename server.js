@@ -1029,13 +1029,23 @@ app.post("/telegram-webhook", async (req, res) => {
     if (user.step === "awaiting_amount") {
       const amt = parseFloat(text);
       if (isNaN(amt) || amt < 0.5) {
+            if (isNaN(amt) || amt < 0.5) {
+        const errText = `‼️እባክዎ ትክክለኛ መጠን ያስገቡ (ዝቅተኛው 0.5 USDT)፦`;
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: userId, text: "⚠️ እባክዎ ትክክለኛ መጠን ያስገቡ (ዝቅተኛው 0.5 USDT)፦" })
+          body: JSON.stringify({
+            chat_id: userId,
+            text: errText,
+            entities: [
+              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "4958534696645428119" },
+              { offset: 2, length: 22, type: "bold" }
+            ]
+          })
         });
         return;
       }
+
 
       const rate = getRate(amt);
       const total = amt * rate;
@@ -1091,18 +1101,35 @@ app.post("/telegram-webhook", async (req, res) => {
       const method = (user.tempOrder && user.tempOrder.method) || "Telebirr";
 
       if (method === "Telebirr" && !/^09\d{8}$/.test(cleanAcc)) {
+            if (method === "Telebirr" && !/^09\d{8}$/.test(cleanAcc)) {
+        const errText = `🏦የቴሌብር ቁጥር 09 የሚጀምር 10 ድጅት መሆን አለበት! ደግመው በትክክል ያስገቡ፦`;
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: userId, text: "⚠️ የቴሌብር ቁጥር 09 የሚጀምር 10 ድጅት መሆን አለበት! ደግመው ያስገቡ፦" })
+          body: JSON.stringify({
+            chat_id: userId,
+            text: errText,
+            entities: [
+              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
+              { offset: 2, length: 37, type: "bold" }
+            ]
+          })
         });
         return;
       }
       if (method === "CBE" && !/^\d{13}$/.test(cleanAcc)) {
+        const errText = `🏦 የንግድ ባንክ (CBE) አካውንት 13 ድጅት መሆን አለበት! ደግመው በትክክል ያስገቡ፦`;
         await telegram("sendMessage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: userId, text: "⚠️ የንግድ ባንክ (CBE) አካውንት 13 ድጅት መሆን አለበት! ደግመው ያስገቡ፦" })
+          body: JSON.stringify({
+            chat_id: userId,
+            text: errText,
+            entities: [
+              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5931351583827696128" },
+              { offset: 3, length: 41, type: "bold" }
+            ]
+          })
         });
         return;
       }
