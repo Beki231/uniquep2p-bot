@@ -693,13 +693,44 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    if (text === "🔙 ወደ ዋናው ሜኑ ተመለስ") {
+        if (text === "🔙 ወደ ዋናው ሜኑ ተመለስ") {
       user.step = "idle";
       user.tempOrder = {};
       await user.save();
-      await sendMainMenu(userId);
+
+      // 1. መጀመሪያ "ወደ ዋናው ሜኑ ተመልሰዋል!" የሚለውን መልዕክት ይልካል
+      const backConfirmText = "✅ ወደ ዋናው ሜኑ ተመልሰዋል!";
+      await telegram("sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: userId,
+          text: backConfirmText,
+          entities: [
+            { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
+            { offset: 2, length: 20, type: "bold" }
+          ]
+        })
+      });
+
+      // 2. ወዲያውኑ Welcome Banner እና ዋናውን ሜኑ ኪቦርድ ይልካል
+      const welcomeCaption = "🔥 እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!↔️\n\n ደህንነቱ የተጠበቀ🛡 እና እጅግ ፈጣን የ USDT💵 መገበያያ ቤት!⚡️\n\n ⬇️ የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-";
+      const welcomeEntities = await buildCustomEmojiEntities(welcomeCaption);
+
+      await telegram("sendPhoto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: userId,
+          photo: BANNER_IMAGE_URL,
+          caption: welcomeCaption,
+          caption_entities: welcomeEntities,
+          reply_markup: mainMenuKeyboard
+        })
+      });
       return;
     }
+
 
     if (text === "〽️ እንዴት ይሰራል?") {
       const howItWorksText = 
