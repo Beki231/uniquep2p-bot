@@ -744,13 +744,25 @@ app.post("/telegram-webhook", async (req, res) => {
       return;
     }
 
-    if (text === "🛒 USDT መግዛት") {
+        if (text === "🛒 USDT መግዛት") {
       const buyText =
-        `🛒 <b>USDT መግዛት</b>\n` +
+        `🔼 USDT መግዛት\n` +
         `━━━━━━━━━━━━━━━━━━━\n` +
-        `📖 <i>ይህ አገልግሎት በቅርቡ ይጀምራል፤ ዝግጅቱን እያጠናቀቅን ነው።\n\n` +
-        `አገልግሎቱ ክፍት ሲሆን ወዲያውኑ ማሳወቂያ ይደርሳችኋል። እባክዎ በትዕግስት ይጠብቁን!</i>\n` +
+        `🔥 ይህ አገልግሎት በቅርቡ ይጀምራል፤ ዝግጅቱን እያጠናቀቅን ነው🍾።\n\n` +
+        `📣አገልግሎቱ ክፍት ሲሆን ወዲያውኑ ማሳወቂያ ይደርሳችኋል። እባክዎ በትዕግስት ይጠብቁን!❤️‍🔥\n` +
         `━━━━━━━━━━━━━━━━━━━━`;
+
+      const buyEntities = [
+        { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5041845079229072486" },
+        { offset: 3, length: 9, type: "bold" },
+        { offset: 33, length: 2, type: "custom_emoji", custom_emoji_id: "5039644681583985437" },
+        { offset: 36, length: 38, type: "italic" },
+        { offset: 74, length: 2, type: "custom_emoji", custom_emoji_id: "5042274086332400375" },
+        { offset: 76, length: 1, type: "italic" },
+        { offset: 79, length: 2, type: "custom_emoji", custom_emoji_id: "5041888071851705019" },
+        { offset: 81, length: 54, type: "italic" },
+        { offset: 135, length: 5, type: "custom_emoji", custom_emoji_id: "5042225965518816316" }
+      ];
 
       await telegram("sendMessage", {
         method: "POST",
@@ -758,7 +770,7 @@ app.post("/telegram-webhook", async (req, res) => {
         body: JSON.stringify({
           chat_id: userId,
           text: buyText,
-          parse_mode: "HTML"
+          entities: buyEntities
         })
       });
       return;
