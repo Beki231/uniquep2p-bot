@@ -240,8 +240,18 @@ const CUSTOM_EMOJI_IDS = [
   "5406745015365943482"
 ];
 
-async function buildCustomEmojiEntities(text) {
+async function buildCustomEmojiEntities(text, makeBold = true) {
   try {
+    const entities = [];
+
+    if (makeBold && text.length > 0) {
+      entities.push({
+        type: "bold",
+        offset: 0,
+        length: text.length
+      });
+    }
+
     const stickers = await telegram("getCustomEmojiStickers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -249,8 +259,6 @@ async function buildCustomEmojiEntities(text) {
         custom_emoji_ids: CUSTOM_EMOJI_IDS
       })
     });
-
-    const entities = [];
 
     for (const sticker of stickers) {
       const emoji = sticker.emoji;
@@ -270,9 +278,10 @@ async function buildCustomEmojiEntities(text) {
     return entities.sort((a, b) => a.offset - b.offset);
   } catch (error) {
     console.error("Custom Emoji Error:", error.message);
-    return [];
+    return makeBold && text.length > 0 ? [{ type: "bold", offset: 0, length: text.length }] : [];
   }
 }
+
 
 async function checkMembership(userId) {
   try {
