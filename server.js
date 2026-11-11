@@ -1029,7 +1029,6 @@ app.post("/telegram-webhook", async (req, res) => {
     if (user.step === "awaiting_amount") {
       const amt = parseFloat(text);
       if (isNaN(amt) || amt < 0.5) {
-            if (isNaN(amt) || amt < 0.5) {
         const errText = `‼️እባክዎ ትክክለኛ መጠን ያስገቡ (ዝቅተኛው 0.5 USDT)፦`;
         await telegram("sendMessage", {
           method: "POST",
@@ -1045,7 +1044,6 @@ app.post("/telegram-webhook", async (req, res) => {
         });
         return;
       }
-
 
       const rate = getRate(amt);
       const total = amt * rate;
@@ -1101,7 +1099,6 @@ app.post("/telegram-webhook", async (req, res) => {
       const method = (user.tempOrder && user.tempOrder.method) || "Telebirr";
 
       if (method === "Telebirr" && !/^09\d{8}$/.test(cleanAcc)) {
-            if (method === "Telebirr" && !/^09\d{8}$/.test(cleanAcc)) {
         const errText = `🏦የቴሌብር ቁጥር 09 የሚጀምር 10 ድጅት መሆን አለበት! ደግመው በትክክል ያስገቡ፦`;
         await telegram("sendMessage", {
           method: "POST",
