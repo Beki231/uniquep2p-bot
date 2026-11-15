@@ -166,6 +166,30 @@ const cryptoNetworks = {
       { offset: 117, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
       { offset: 120, length: 33, type: "bold" }
     ]
+  },
+  aptos: {
+    name: "Aptos (APT)",
+    text:
+      `🗓 የመረጡት ኔትወርክ: Aptos😟\n\n` +
+      `📊 የመላኪያ አድራሻ:⬇️\n\n` +
+      `🕯 Address : 0xfb5ba0a2f6ea28cdaa4a5f1732ae94d88ac547279909e98768edc57607d53a72\n\n` +
+      `👆 Address በመንካት Copy አርጉ\n\n` +
+      `⬇️ USDT ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦`,
+    entities: [
+      { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5274055917766202507" },
+      { offset: 3, length: 14, type: "bold" },
+      { offset: 21, length: 2, type: "custom_emoji", custom_emoji_id: "5327975761833913214" },
+      { offset: 25, length: 2, type: "custom_emoji", custom_emoji_id: "5042290883949495533" },
+      { offset: 28, length: 11, type: "bold" },
+      { offset: 39, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+      { offset: 43, length: 2, type: "custom_emoji", custom_emoji_id: "6001226849147951932" },
+      { offset: 46, length: 9, type: "bold" },
+      { offset: 56, length: 66, type: "code" },
+      { offset: 124, length: 2, type: "custom_emoji", custom_emoji_id: "5469718869536940860" },
+      { offset: 127, length: 22, type: "italic" },
+      { offset: 151, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+      { offset: 154, length: 33, type: "bold" }
+    ]
   }
 };
 
@@ -299,9 +323,9 @@ async function checkMembership(userId) {
 
 const mainMenuKeyboard = {
   keyboard: [
-    [{ text: "💵 USDT መሸጥ" }, { text: "🛒 USDT መግዛት" }],
+    [{ text: "🔴 USDT መሸጥ" }, { text: "🟢 USDT መግዛት" }],
     [{ text: "📊 የዛሬ ተመን" }, { text: "📜 የትዕዛዝ ታሪክ" }],
-    [{ text: "📞 ድጋፍ / አድሚን" }]
+    [{ text: "🧑‍💻 ድጋፍ / አድሚን" }]
   ],
   resize_keyboard: true
 };
@@ -837,7 +861,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      if (text === "🛒 USDT መግዛት") {
+      if (text === "🟢 USDT መግዛት") {
         const buyText =
           `🔼 USDT መግዛት\n` +
           `━━━━━━━━━━━━━━━━━━━\n` +
@@ -965,7 +989,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      if (text === "📞 ድጋፍ / አድሚን") {
+      if (text === "🧑‍💻 ድጋፍ / አድሚን") {
         const supportText = 
           `👨‍💻የደንበኞች ድጋፍ እና ማህበረሰብ\n` +
           `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -1002,7 +1026,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      if (text === "💵 USDT መሸጥ") {
+      if (text === "🔴 USDT መሸጥ") {
         const botSettings = await Settings.findOne({ key: "v2_settings" });
         if (botSettings && botSettings.isPaused) {
           await telegram("sendMessage", {
@@ -1163,6 +1187,9 @@ app.post("/telegram-webhook", async (req, res) => {
             [
               { text: "Ton Network", icon_custom_emoji_id: "5359320566304096699", callback_data: "net:ton" },
               { text: "LiteCoin (Ltc)", icon_custom_emoji_id: "5829979991886011025", callback_data: "net:ltc" }
+            ],
+            [
+              { text: "Aptos", icon_custom_emoji_id: "5327975761833913214", callback_data: "net:aptos" }
             ]
           ]
         };
