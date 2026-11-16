@@ -27,6 +27,7 @@ const UserSchema = new mongoose.Schema({
   isJoined: { type: Boolean, default: false },
   step: { type: String, default: "idle" },
   tempOrder: { type: Object, default: {} },
+  activeBuyOrderId: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -42,6 +43,7 @@ const OrderSchema = new mongoose.Schema({
   account: { type: String, default: "N/A" },
   method: { type: String, default: "N/A" },
   network: { type: String, default: "N/A" },
+  networkKey: { type: String, default: "" },
   status: { type: String, enum: ["awaiting_permission", "awaiting_payment", "pending", "approved", "declined"], default: "pending" },
   customerProofFileId: String,
   receiptFileId: String,
@@ -905,7 +907,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      // ================= BUY USDT FLOW (PART 1) =================
+      // ================= BUY USDT FLOW =================
       if (text === "🟢 USDT መግዛት") {
         const botSettings = await Settings.findOne({ key: "v2_settings" });
         if (botSettings && botSettings.isPaused) {
@@ -1062,7 +1064,7 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-        const orderId = crypto.randomUUID();
+        const orderId = `ORD-${Date.now()}`;
         const orderData = user.tempOrder || {};
         const netKey = orderData.networkKey || "binance";
         const netName = orderData.networkName || "Binance ID";
@@ -1080,6 +1082,7 @@ app.post("/telegram-webhook", async (req, res) => {
             rate: Number(orderData.rate) || exchangeRates.buyRate,
             account: walletAddress,
             network: netName,
+            networkKey: netKey,
             status: "awaiting_permission"
           });
 
@@ -1087,10 +1090,8 @@ app.post("/telegram-webhook", async (req, res) => {
           user.tempOrder = {};
           await user.save();
 
-          // ለተጠቃሚው የሚላክ መልዕክት (እንደ ኔትወርኩ በCustom Emoji የተዘጋጀ)
           let sentText = "";
           let sentEntities = [];
-
           const amtPart = `${orderData.amount} USDT (${totalFixed} ETB)`;
 
           if (netKey === "binance") {
@@ -1145,7 +1146,6 @@ app.post("/telegram-webhook", async (req, res) => {
               { offset: sentText.indexOf("👨‍💻"), length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
             ];
           } else {
-            // aptos
             sentText =
               `✔️ የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!\n\n` +
               `💵 መጠን፦ ${amtPart}\n` +
@@ -1175,17 +1175,26 @@ app.post("/telegram-webhook", async (req, res) => {
             })
           });
 
-          // ወደ Admin የሚላክ First Approve (Permission Request)
+          const netIconMap = {
+            binance: "🟠 Binance ID",
+            bep20: "🔶 BEP-20",
+            ton: "💎 TON",
+            aptos: "⚪ Aptos"
+          };
+          const netDisplay = netIconMap[netKey] || netName;
+          const userTag = msg.from.username ? `@${msg.from.username}` : "የለውም";
+
           const adminBuyReqText =
-            `🛒 <b>አዲስ የ USDT ግዢ ጥያቄ (First Approval)</b>\n━━━━━━━━━━━━━━━━━━\n` +
-            `👤 <b>ገዢ:</b> ${escapeHTML(msg.from.first_name || "ደንበኛ")} (@${msg.from.username || "የለውም"})\n` +
-            `🆔 <b>User ID:</b> <code>${userId}</code>\n` +
-            `💵 <b>የሚገዛው:</b> ${orderData.amount} USDT\n` +
-            `📈 <b>Rate:</b> ${orderData.rate} ETB\n` +
-            `💰 <b>የሚከፍለው:</b> ${totalFixed} ETB\n` +
-            `🌐 <b>Network:</b> ${netName}\n` +
-            `📥 <b>Address / ID:</b> <code>${escapeHTML(walletAddress)}</code>\n━━━━━━━━━━━━━━━━━━\n` +
-            `🆔 <b>Order:</b> <code>${orderId}</code>`;
+            `🔔 <b>አዲስ የ USDT ግዢ ጥያቄ ደርሷል (ፍቃድ ይጠይቃል)!</b>\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `🆔 <b>ትዕዛዝ ቁጥር፦</b> <code>${orderId}</code>\n` +
+            `👤 <b>ደንበኛ፦</b> ${userTag} (${escapeHTML(msg.from.first_name || "ደንበኛ")})\n` +
+            `🆔 <b>ID፦</b> <code>${userId}</code>\n` +
+            `💵 <b>የሚገዛው መጠን፦</b> ${orderData.amount} USDT\n` +
+            `💰 <b>የሚከፍለው ብር፦</b> ${totalFixed} ETB\n` +
+            `🔗 <b>ኔትወርክ፦</b> ${netDisplay}\n` +
+            `🎯 <b>መቀበያ Wallet/ID፦</b> <code>${escapeHTML(walletAddress)}</code>\n\n` +
+            `👉 <i>ይህ ሰው ክፍያ እንዲፈጽም ይፈቀድ?</i>`;
 
           const sentAdminBuyMsg = await telegram("sendMessage", {
             method: "POST",
@@ -1197,8 +1206,8 @@ app.post("/telegram-webhook", async (req, res) => {
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: "✅ ፍቀድ (Allow)", callback_data: `buy_allow:${orderId}` },
-                    { text: "❌ ውድቅ (Reject)", callback_data: `buy_reject:${orderId}` }
+                    { text: "✅ Approve", callback_data: `buy_allow:${orderId}` },
+                    { text: "❌ Decline", callback_data: `buy_reject:${orderId}` }
                   ]
                 ]
               }
@@ -2081,17 +2090,140 @@ app.post("/telegram-webhook", async (req, res) => {
 
         const [action, orderId] = callbackData.split(":");
 
-        // BUY FIRST APPROVAL (ALLOW / REJECT) - PART 2 በሚቀጥለው ይጠናቀቃል
+        // BUY FIRST APPROVAL (ONE-TIME APPROVE)
+        if (action === "buy_allow") {
+          const buyOrder = await Order.findOne({ orderId });
+          if (!buyOrder || buyOrder.status !== "awaiting_permission") {
+            await clearAdminOrderButtons(callback.message?.message_id);
+            await telegram("answerCallbackQuery", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ callback_query_id: callback.id, text: "⚠️ ይህ ጥያቄ ቀድሞ ተስተናግዷል!", show_alert: true })
+            });
+            return;
+          }
+
+          buyOrder.status = "awaiting_payment";
+          await buyOrder.save();
+
+          await User.findOneAndUpdate(
+            { telegramId: buyOrder.userId },
+            { step: "awaiting_buy_screenshot", activeBuyOrderId: buyOrder.orderId }
+          );
+
+          // One-Time Approve: ቁልፎቹን አጥፍቶ ከስሩ "✅ ተፈቅዷል፤ የባንክ መረጃ ተልኮለታል!" ይጽፋል
+          if (callback.message?.message_id) {
+            const origText = callback.message.text || "";
+            const updatedAdminText = origText.replace("👉 ይህ ሰው ክፍያ እንዲፈጽም ይፈቀድ?", "✅ ተፈቅዷል፤ የባንክ መረጃ ተልኮለታል!");
+            try {
+              await telegram("editMessageText", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  chat_id: ADMIN_CHAT_ID,
+                  message_id: callback.message.message_id,
+                  text: updatedAdminText,
+                  reply_markup: { inline_keyboard: [] }
+                })
+              });
+            } catch (e) {
+              await clearAdminOrderButtons(callback.message.message_id);
+            }
+          }
+
+          // ለተጠቃሚው የባንክ መረጃ መላክ
+          const amtStr = `${buyOrder.amount} USDT`;
+          const totalEtbStr = `${Number(buyOrder.total || 0)} ETB`;
+          const addrStr = `${buyOrder.account}`;
+          const netLabel = buyOrder.network || "Binance ID";
+          const telebirrNum = "0949241461";
+          const cbeNum = "1000725377421";
+
+          const paymentInfoText =
+            `✔️ ትዕዛዝዎ ተፈቅዷል፤ ክፍያ መፈጸም ይችላሉ!\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `💵 የሚገዙት መጠን፦ ${amtStr}\n` +
+            `💰 የሚከፍሉት ጠቅላላ ብር፦ ${totalEtbStr}\n` +
+            `🖥 መቀበያዎ፦ ${addrStr} (💰${netLabel})\n\n` +
+            `⬇️ እባክዎ ትክክለኛውን ብር ከታች ባሉት አማራጮች ገቢ ያድርጉ፡-\n\n` +
+            `🏦 Telebirr፦ ${telebirrNum}\n` +
+            `👤 ስም፦ Bereket\n\n` +
+            `🏦 CBE ንግድ ባንክ፦ ${cbeNum}\n` +
+            `👤 ስም፦ Bereket Wondimhun\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🗓 ክፍያውን እንደፈጸሙ የከፈሉበትን ደረሰኝ (Screenshot) ከስር ይላኩ፡-`;
+
+          const paymentInfoEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
+            { offset: 3, length: 30, type: "bold" },
+            { offset: paymentInfoText.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
+            { offset: paymentInfoText.indexOf(amtStr), length: amtStr.length, type: "bold" },
+            { offset: paymentInfoText.indexOf("💰 የሚከፍሉት"), length: 2, type: "custom_emoji", custom_emoji_id: "5039789890133296083" },
+            { offset: paymentInfoText.indexOf(totalEtbStr), length: totalEtbStr.length, type: "bold" },
+            { offset: paymentInfoText.indexOf("🖥"), length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
+            { offset: paymentInfoText.indexOf(addrStr), length: addrStr.length, type: "code" },
+            { offset: paymentInfoText.indexOf(`(💰${netLabel})`) + 1, length: 2, type: "custom_emoji", custom_emoji_id: "5296437653770608702" },
+            { offset: paymentInfoText.indexOf("⬇️"), length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+            { offset: paymentInfoText.indexOf("🏦 Telebirr"), length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
+            { offset: paymentInfoText.indexOf(telebirrNum), length: telebirrNum.length, type: "code" },
+            { offset: paymentInfoText.indexOf("👤 ስም፦ Bereket\n"), length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: paymentInfoText.indexOf("🏦 CBE"), length: 2, type: "custom_emoji", custom_emoji_id: "5796351978506298393" },
+            { offset: paymentInfoText.indexOf(cbeNum), length: cbeNum.length, type: "code" },
+            { offset: paymentInfoText.indexOf("👤 ስም፦ Bereket Wondimhun"), length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: paymentInfoText.indexOf("🗓"), length: 2, type: "custom_emoji", custom_emoji_id: "5274055917766202507" }
+          ];
+
+          await telegram("sendMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: buyOrder.userId,
+              text: paymentInfoText,
+              entities: paymentInfoEntities,
+              reply_markup: { keyboard: [[{ text: "❌ ሰርዝ (Cancel)" }]], resize_keyboard: true }
+            })
+          });
+
+          await telegram("answerCallbackQuery", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ callback_query_id: callback.id, text: "✅ ተፈቅዷል!" })
+          });
+          return;
+        }
+
         if (action === "buy_reject") {
           const buyOrder = await Order.findOne({ orderId });
           if (!buyOrder || buyOrder.status !== "awaiting_permission") {
             await clearAdminOrderButtons(callback.message?.message_id);
-            await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "ይህ ትዕዛዝ ቀድሞ ተጠናቋል!" }) });
+            await telegram("answerCallbackQuery", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ callback_query_id: callback.id, text: "⚠️ ይህ ጥያቄ ቀድሞ ተስተናግዷል!", show_alert: true })
+            });
             return;
           }
           buyOrder.status = "declined";
           await buyOrder.save();
-          await clearAdminOrderButtons(callback.message?.message_id || buyOrder.adminMessageId);
+
+          if (callback.message?.message_id) {
+            const origText = callback.message.text || "";
+            const updatedAdminText = origText.replace("👉 ይህ ሰው ክፍያ እንዲፈጽም ይፈቀድ?", "❌ ውድቅ ተደርጓል!");
+            try {
+              await telegram("editMessageText", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  chat_id: ADMIN_CHAT_ID,
+                  message_id: callback.message.message_id,
+                  text: updatedAdminText,
+                  reply_markup: { inline_keyboard: [] }
+                })
+              });
+            } catch (e) {
+              await clearAdminOrderButtons(callback.message.message_id);
+            }
+          }
 
           await telegram("sendMessage", {
             method: "POST",
@@ -2101,7 +2233,7 @@ app.post("/telegram-webhook", async (req, res) => {
               text: "❌ ይቅርታ፣ የ USDT ግዢ ጥያቄዎ በአድሚን ውድቅ ተደርጓል። ለተጨማሪ መረጃ @Aropc ያነጋግሩ።"
             })
           });
-          await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "❌ Rejected!" }) });
+          await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "❌ Declined!" }) });
           return;
         }
 
