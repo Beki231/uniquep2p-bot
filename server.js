@@ -1107,7 +1107,7 @@ app.post("/telegram-webhook", async (req, res) => {
       }
 
       if (user.step === "awaiting_buy_address") {
-        const walletAddress = text.trim(); // ምንም ቼክ የለውም
+        const walletAddress = text.trim(); 
 
         const orderId = `ORD-${Date.now()}`;
         const orderData = user.tempOrder || {};
@@ -2154,26 +2154,31 @@ app.post("/telegram-webhook", async (req, res) => {
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
           const netKey = order.networkKey || "binance";
-          let netEmojiId = "5296437653770608702"; 
+          let netEmoji = "💰"; 
           let netDisplayName = "Binance ID";
+          let netCustomEmojiId = "5296437653770608702";
 
           if (netKey === "bep20") {
-            netEmojiId = "5291786530606562380";
+            netEmoji = "🔶";
             netDisplayName = "Bep-20";
+            netCustomEmojiId = "5291786530606562380";
           } else if (netKey === "ton") {
-            netEmojiId = "5350716797622442220";
+            netEmoji = "🤑";
             netDisplayName = "TON";
+            netCustomEmojiId = "5350716797622442220";
           } else if (netKey === "aptos") {
-            netEmojiId = "5327975761833913214";
+            netEmoji = "😟";
             netDisplayName = "Aptos";
+            netCustomEmojiId = "5327975761833913214";
           }
 
+          // HTML parse_mode በመጠቀም ሙሉ በሙሉ Bold እና Mono (code) እንዲወጡ ተደርጓል
           const approvedText =
             `✔️ ትዕዛዝዎ ተፈቅዷል፤ ክፍያ መፈጸም ይችላሉ!\n` +
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
             `💵 የሚገዙት መጠን፦ <b>${order.amount} USDT</b>\n` +
             `💰 የሚከፍሉት ጠቅላላ ብር፦ <b>${Number(order.total || 0).toLocaleString()} ETB</b>\n` +
-            `🖥 መቀበያዎ፦ <code>${order.account}</code> (${netEmojiId === "5296437653770608702" ? "💰" : netEmojiId === "5291786530606562380" ? "🔶" : netEmojiId === "5350716797622442220" ? "🤑" : "😟"}${netDisplayName})\n\n` +
+            `🖥 መቀበያዎ፦ <code>${escapeHTML(order.account)}</code> (${netEmoji}${netDisplayName})\n\n` +
             `⬇️ እባክዎ ትክክለኛውን ብር ከታች ባሉት አማራጮች ገቢ ያድርጉ፡-\n\n` +
             `🏦 Telebirr፦ <code>0949241461</code>\n` +
             `👤 ስም፦ <b>Bereket</b>\n\n` +
@@ -2182,30 +2187,14 @@ app.post("/telegram-webhook", async (req, res) => {
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
             `🗓 ክፍያውን እንደፈጸሙ የከፈሉበትን ደረሰኝ (Screenshot) ከስር ይላኩ፡-`;
 
-          const approvedEntities = [
-            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
-            { offset: 56, length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
-            { offset: 78, length: 2, type: "custom_emoji", custom_emoji_id: "5039789890133296083" },
-            { offset: 106, length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-            { offset: 116, length: order.account.length, type: "code" },
-            { offset: 128 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: netEmojiId },
-            { offset: 143 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
-            { offset: 187 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
-            { offset: 200 + order.account.length, length: 10, type: "code" },
-            { offset: 212 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
-            { offset: 228 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5796351978506298393" },
-            { offset: 258 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
-            { offset: 269 + order.account.length, length: 13, type: "code" },
-            { offset: 310 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5274055917766202507" }
-          ];
-
+          // የቴሌግራም ኤፒአይ ሎግ ስህተት (ENTITY_TEXT_INVALID) እንዳይፈጠር HTML parse_mode ብቻ ጥቅም ላይ ውሏል
           await telegram("sendMessage", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               chat_id: order.userId,
               text: approvedText,
-              entities: approvedEntities
+              parse_mode: "HTML"
             })
           });
 
