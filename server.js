@@ -79,7 +79,7 @@ let pendingReceiptOrder = null;
 
 const cryptoNetworks = {
   binance: {
-    name: "Binance Pay UID",
+    name: "Binance ID",
     text:
       `🗓የመረጡት ኔትወርክ: Binance Pay🤪\n\n` +
       `📊 የመላኪያ አድራሻ:⬇️\n\n` +
@@ -104,7 +104,7 @@ const cryptoNetworks = {
     ]
   },
   bep20: {
-    name: "BEP-20 (BSC)",
+    name: "BEP-20",
     text:
       `🗓 የመረጡት ኔትወርክ: BEP-20🔶\n\n` +
       `📊 የመላኪያ አድራሻ:⬇️\n\n` +
@@ -128,7 +128,7 @@ const cryptoNetworks = {
     ]
   },
   ton: {
-    name: "TON Network",
+    name: "TON",
     text:
       `🗓 የመረጡት ኔትወርክ: TON📱\n\n` +
       `📊 የመላኪያ አድራሻ:⬇️\n\n` +
@@ -151,32 +151,8 @@ const cryptoNetworks = {
       { offset: 134, length: 33, type: "bold" }
     ]
   },
-  ltc: {
-    name: "Litecoin (LTC)",
-    text:
-      `🗓 የመረጡት ኔትወርክ: LTC🪙\n\n` +
-      `📊 የመላኪያ አድራሻ:⬇️\n\n` +
-      `🕯 Address : LMSESUBB5Ee9JschXusNrqKTQjMSr4d6sc\n\n` +
-      `👆 Address በመንካት Copy አርጉ\n\n` +
-      `⬇️ USDT ከላኩ በኋላ ብር የሚቀበሉበትን ዘዴ ይምረጡ፦`,
-    entities: [
-      { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5413879192267805083" },
-      { offset: 3, length: 14, type: "bold" },
-      { offset: 19, length: 2, type: "custom_emoji", custom_emoji_id: "5829979991886011025" },
-      { offset: 23, length: 2, type: "custom_emoji", custom_emoji_id: "5231200819986047254" },
-      { offset: 26, length: 11, type: "bold" },
-      { offset: 37, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
-      { offset: 41, length: 2, type: "custom_emoji", custom_emoji_id: "5451882707875276247" },
-      { offset: 44, length: 9, type: "bold" },
-      { offset: 54, length: 34, type: "code" },
-      { offset: 90, length: 2, type: "custom_emoji", custom_emoji_id: "5469718869536940860" },
-      { offset: 93, length: 22, type: "italic" },
-      { offset: 117, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
-      { offset: 120, length: 33, type: "bold" }
-    ]
-  },
   aptos: {
-    name: "Aptos (APT)",
+    name: "Aptos",
     text:
       `🗓 የመረጡት ኔትወርክ: Aptos😟\n\n` +
       `📊 የመላኪያ አድራሻ:⬇️\n\n` +
@@ -388,7 +364,7 @@ app.post("/telegram-webhook", async (req, res) => {
           await clearAdminOrderButtons(order.adminMessageId);
 
           const netKey = order.networkKey || "binance";
-          let netEmojiId = "5296437653770608702"; // 💰 Binance
+          let netEmojiId = "5296437653770608702"; 
           let netDisplayName = "Binance";
 
           if (netKey === "bep20") {
@@ -2154,31 +2130,26 @@ app.post("/telegram-webhook", async (req, res) => {
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
           const netKey = order.networkKey || "binance";
-          let netEmoji = "💰"; 
+          let netEmojiId = "5296437653770608702"; 
           let netDisplayName = "Binance ID";
-          let netCustomEmojiId = "5296437653770608702";
 
           if (netKey === "bep20") {
-            netEmoji = "🔶";
+            netEmojiId = "5291786530606562380";
             netDisplayName = "Bep-20";
-            netCustomEmojiId = "5291786530606562380";
           } else if (netKey === "ton") {
-            netEmoji = "🤑";
+            netEmojiId = "5350716797622442220";
             netDisplayName = "TON";
-            netCustomEmojiId = "5350716797622442220";
           } else if (netKey === "aptos") {
-            netEmoji = "😟";
+            netEmojiId = "5327975761833913214";
             netDisplayName = "Aptos";
-            netCustomEmojiId = "5327975761833913214";
           }
 
-          // HTML parse_mode በመጠቀም ሙሉ በሙሉ Bold እና Mono (code) እንዲወጡ ተደርጓል
           const approvedText =
             `✔️ ትዕዛዝዎ ተፈቅዷል፤ ክፍያ መፈጸም ይችላሉ!\n` +
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
             `💵 የሚገዙት መጠን፦ <b>${order.amount} USDT</b>\n` +
             `💰 የሚከፍሉት ጠቅላላ ብር፦ <b>${Number(order.total || 0).toLocaleString()} ETB</b>\n` +
-            `🖥 መቀበያዎ፦ <code>${escapeHTML(order.account)}</code> (${netEmoji}${netDisplayName})\n\n` +
+            `🖥 መቀበያዎ፦ <code>${order.account}</code> (${netEmojiId === "5296437653770608702" ? "💰" : netEmojiId === "5291786530606562380" ? "🔶" : netEmojiId === "5350716797622442220" ? "🤑" : "😟"}${netDisplayName})\n\n` +
             `⬇️ እባክዎ ትክክለኛውን ብር ከታች ባሉት አማራጮች ገቢ ያድርጉ፡-\n\n` +
             `🏦 Telebirr፦ <code>0949241461</code>\n` +
             `👤 ስም፦ <b>Bereket</b>\n\n` +
@@ -2187,14 +2158,30 @@ app.post("/telegram-webhook", async (req, res) => {
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
             `🗓 ክፍያውን እንደፈጸሙ የከፈሉበትን ደረሰኝ (Screenshot) ከስር ይላኩ፡-`;
 
-          // የቴሌግራም ኤፒአይ ሎግ ስህተት (ENTITY_TEXT_INVALID) እንዳይፈጠር HTML parse_mode ብቻ ጥቅም ላይ ውሏል
+          const approvedEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
+            { offset: 56, length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
+            { offset: 78, length: 2, type: "custom_emoji", custom_emoji_id: "5039789890133296083" },
+            { offset: 106, length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
+            { offset: 116, length: order.account.length, type: "code" },
+            { offset: 128 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: netEmojiId },
+            { offset: 143 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+            { offset: 187 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
+            { offset: 200 + order.account.length, length: 10, type: "code" },
+            { offset: 212 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 228 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5796351978506298393" },
+            { offset: 258 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 269 + order.account.length, length: 13, type: "code" },
+            { offset: 310 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5274055917766202507" }
+          ];
+
           await telegram("sendMessage", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               chat_id: order.userId,
               text: approvedText,
-              parse_mode: "HTML"
+              entities: approvedEntities
             })
           });
 
