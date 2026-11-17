@@ -2121,34 +2121,7 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-                const [action, orderId] = callbackData && callbackData.includes(":") ? callbackData.split(":") : ["", ""];
-        const order = await Order.findOne({ orderId });
-        if (!order || (order.status !== "pending" && order.status !== "awaiting_permission")) {
-          await clearAdminOrderButtons(callback.message?.message_id);
-          await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "ይህ ትዕዛዝ ቀድሞ ተጠናቋል!" }) });
-          return;
-        }
-
-        if (action === "receipt") {
-          pendingReceiptOrder = orderId;
-          if (callback.message?.message_id && !order.adminMessageId) {
-            order.adminMessageId = callback.message.message_id;
-            await order.save();
-          }
-          await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id }) });
-          await telegram("sendMessage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: ADMIN_CHAT_ID, text: "📸 የከፈሉበትን ደረሰኝ Screenshot አሁን ይላኩ (ለመሰረዝ /cancel)፦" }) });
-          return;
-        }
-
-                                let action = "";
-        let orderId = "";
-        if (callback && callback.data) {
-          const parts = callback.data.split(":");
-          action = parts[0] || "";
-          orderId = parts[1] || "";
-        }
-
-
+          const [action, orderId] = callbackData.split(":");
         let order = await Order.findOne({ orderId });
         if (!order) {
           order = await Order.findOne({ adminMessageId: callback.message?.message_id });
@@ -2164,7 +2137,18 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-        if (action.includes("approve") || action.includes("allow") || action.startsWith("buy_allow") || action.startsWith("quick_approve")) {
+        if (action === "receipt") {
+          pendingReceiptOrder = orderId;
+          if (callback.message?.message_id && !order.adminMessageId) {
+            order.adminMessageId = callback.message.message_id;
+            await order.save();
+          }
+          await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id }) });
+          await telegram("sendMessage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: ADMIN_CHAT_ID, text: "📸 የከፈሉበትን ደረሰኝ Screenshot አሁን ይላኩ (ለመሰረዝ /cancel)፦" }) });
+          return;
+        }
+
+        if (action === "quick_approve" || action === "buy_allow") {
           order.status = "approved";
           const buyingUser = await User.findOne({ telegramId: order.userId });
           if (buyingUser) {
@@ -2237,13 +2221,13 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-        if (action.includes("decline") || action.includes("reject") || action.startsWith("buy_reject")) {
+        if (action === "decline" || action === "buy_reject") {
           order.status = "declined";
           await order.save();
 
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
-          const isBuyOrder = action.includes("buy_reject") || action.includes("reject");
+          const isBuyOrder = action === "buy_reject";
           const declineMsg = isBuyOrder
             ? `🫡 ይቅርታ፣ የ USDT ግዢ ጥያቄዎ በአድሚን ውድቅ ተደርጓል!\n\n💬 ለተጨማሪ መረጃ @Aropc ያነጋግሩ።`
             : `🚫 ትዕዛዝዎ ውድቅ ተደርጓል! ❌\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n⚠️ የላኩት የክፍያ ደረሰኝ (Screenshot) ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።\n\n💬 ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc`;
