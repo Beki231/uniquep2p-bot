@@ -2140,7 +2140,7 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-        if (action === "quick_approve" || action === "buy_allow") {
+         if (action.includes("approve") || action.includes("allow") || action.startsWith("buy_allow") || action.startsWith("quick_approve")) {
           order.status = "approved";
           const buyingUser = await User.findOne({ telegramId: order.userId });
           if (buyingUser) {
@@ -2172,7 +2172,7 @@ app.post("/telegram-webhook", async (req, res) => {
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
             `💵 የሚገዙት መጠን፦ ${order.amount} USDT\n` +
             `💰 የሚከፍሉት ጠቅላላ ብር፦ ${Number(order.total || 0).toLocaleString()} ETB\n` +
-            `🖥 መቀበያዎ፦ ${order.account} (💰Binance ID)\n\n` +
+            `🖥 መቀበያዎ፦ ${order.account} (💰${netDisplayName})\n\n` +
             `⬇️ እባክዎ ትክክለኛውን ብር ከታች ባሉት አማራጮች ገቢ ያድርጉ፡-\n\n` +
             `🏦 Telebirr፦ 0949241461\n` +
             `👤 ስም፦ Bereket\n\n` +
@@ -2210,16 +2210,16 @@ app.post("/telegram-webhook", async (req, res) => {
           });
 
           await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "✅ Approved!" }) });
-          return; // 💡 ይህ ትክክለኛ ማጠናቀቂያ (return) ጨምረናል
+          return;
         }
 
-        if (action === "decline" || action === "buy_reject") {
+        if (action.includes("decline") || action.includes("reject") || action.startsWith("buy_reject")) {
           order.status = "declined";
           await order.save();
 
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
-          const isBuyOrder = action === "buy_reject";
+          const isBuyOrder = action.includes("buy_reject") || action.includes("reject");
           const declineMsg = isBuyOrder
             ? `🫡 ይቅርታ፣ የ USDT ግዢ ጥያቄዎ በአድሚን ውድቅ ተደርጓል!\n\n💬 ለተጨማሪ መረጃ @Aropc ያነጋግሩ።`
             : `🚫 ትዕዛዝዎ ውድቅ ተደርጓል! ❌\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n⚠️ የላኩት የክፍያ ደረሰኝ (Screenshot) ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።\n\n💬 ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc`;
