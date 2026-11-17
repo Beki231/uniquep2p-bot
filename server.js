@@ -2194,7 +2194,7 @@ app.post("/telegram-webhook", async (req, res) => {
           else if (netKey === "ton") netDisplayName = "TON";
           else if (netKey === "aptos") netDisplayName = "Aptos";
 
-          // 💡 Custom Emojis ያላቸው ርዕሶች እና Bold/Mono (Code style) የተደረጉ አካውንት እና ስልክ ቁጥሮች
+          // 💡 ትክክለኛ የኢንቲቲ ርዝመቶች እና ኦፍሴቶች የተስተካከሉበት የክፍያ መልእክት (ከነ ርዕስ Bold እና አካውንት/ስልክ Mono)
           const approvedText =
             `✔️ ትዕዛዝዎ ተፈቅዷል፤ ክፍያ መፈጸም ይችላሉ!\n` +
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -2209,20 +2209,21 @@ app.post("/telegram-webhook", async (req, res) => {
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
             `🗓 ክፍያውን እንደፈጸሙ የከፈሉበትን ደረሰኝ (Screenshot) ከስር ይላኩ፡-`;
 
+          const accountLen = order.account ? order.account.length : 0;
           const approvedEntities = [
             { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "6267225207560214192" },
             { offset: 56, length: 2, type: "custom_emoji", custom_emoji_id: "5965043124068687455" },
             { offset: 78, length: 2, type: "custom_emoji", custom_emoji_id: "6267068789146260253" },
             { offset: 107, length: 2, type: "custom_emoji", custom_emoji_id: "4956324463525233747" },
-            { offset: 117, length: order.account.length, type: "code" }, // Wallet address in mono
-            { offset: 173, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
-            { offset: 217, length: 2, type: "custom_emoji", custom_emoji_id: "5796159851734244538" },
-            { offset: 230, length: 10, type: "code" }, // Telebirr number in mono
-            { offset: 241, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
-            { offset: 257, length: 2, type: "custom_emoji", custom_emoji_id: "5796351978506298393" },
-            { offset: 275, length: 13, type: "code" }, // CBE number in mono
-            { offset: 287, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
-            { offset: 338, length: 2, type: "custom_emoji", custom_emoji_id: "5413879192267805083" }
+            { offset: 117, length: accountLen, type: "code" }, // Wallet address / UID in mono
+            { offset: 119 + accountLen + netDisplayName.length, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+            { offset: 163 + accountLen + netDisplayName.length, length: 2, type: "custom_emoji", custom_emoji_id: "5796159851734244538" },
+            { offset: 176 + accountLen + netDisplayName.length, length: 10, type: "code" }, // Telebirr number in mono
+            { offset: 187 + accountLen + netDisplayName.length, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 203 + accountLen + netDisplayName.length, length: 2, type: "custom_emoji", custom_emoji_id: "5796351978506298393" },
+            { offset: 221 + accountLen + netDisplayName.length, length: 13, type: "code" }, // CBE number in mono
+            { offset: 233 + accountLen + netDisplayName.length, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 284 + accountLen + netDisplayName.length, length: 2, type: "custom_emoji", custom_emoji_id: "5413879192267805083" }
           ];
 
           try {
