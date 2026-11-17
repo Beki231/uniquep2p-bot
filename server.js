@@ -2140,13 +2140,10 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-        const callbackData = callback.data || "";
-        const [action, orderId] = callbackData.includes(":") ? callbackData.split(":") : [callbackData, ""];
+                const callbackData = callback.data || "";
+        const action = callbackData.includes(":") ? callbackData.split(":")[0] : callbackData;
         
-        let order = await Order.findOne({ orderId });
-        if (!order) {
-          order = await Order.findOne({ adminMessageId: callback.message?.message_id });
-        }
+        let order = await Order.findOne({ adminMessageId: callback.message?.message_id });
 
         if (!order || (order.status !== "pending" && order.status !== "awaiting_permission")) {
           await clearAdminOrderButtons(callback.message?.message_id);
@@ -2280,3 +2277,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Normal Bot running on port ${PORT}`);
 });
+
+           
