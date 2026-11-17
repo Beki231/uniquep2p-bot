@@ -1865,7 +1865,7 @@ app.post("/telegram-webhook", async (req, res) => {
         }
         return;
       }
-
+      
       // BUY NETWORK SELECTION
       if (callbackData.startsWith("buynet:")) {
         const netKey = callbackData.replace("buynet:", "");
@@ -1875,7 +1875,7 @@ app.post("/telegram-webhook", async (req, res) => {
           const netMap = {
             binance: {
               name: "Binance ID",
-              text: `📌 እባክዎ የ Binance💰 ID ቁጥርዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ <code>1197432698</code>`,
+              text: `📌 እባክዎ የ Binance💰 ID ቁጥርዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ 1197432698`,
               entities: [
                 { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5397782960512444700" },
                 { offset: 17, length: 2, type: "custom_emoji", custom_emoji_id: "5202068941580550229" },
@@ -1884,7 +1884,7 @@ app.post("/telegram-webhook", async (req, res) => {
             },
             bep20: {
               name: "BEP-20",
-              text: `📌 እባክዎ የ USDT BEP-20🔶 አድራሻዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ <code>0x71C83920F...</code>`,
+              text: `📌 እባክዎ የ USDT BEP-20🔶 አድራሻዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ 0x71C83920F...`,
               entities: [
                 { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5397782960512444700" },
                 { offset: 21, length: 2, type: "custom_emoji", custom_emoji_id: "5291786530606562380" },
@@ -1893,7 +1893,7 @@ app.post("/telegram-webhook", async (req, res) => {
             },
             ton: {
               name: "TON",
-              text: `📌 እባክዎ የ TON🤑 Wallet አድራሻዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ <code>UQCYZuyq...</code>`,
+              text: `📌 እባክዎ የ TON🤑 Wallet አድራሻዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ UQCYZuyq...`,
               entities: [
                 { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5397782960512444700" },
                 { offset: 13, length: 2, type: "custom_emoji", custom_emoji_id: "5350716797622442220" },
@@ -1902,7 +1902,7 @@ app.post("/telegram-webhook", async (req, res) => {
             },
             aptos: {
               name: "Aptos",
-              text: `📌እባክዎ የ Aptos😟 Wallet አድራሻዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ <code>ox71hcj....</code>`,
+              text: `📌እባክዎ የ Aptos😟 Wallet አድራሻዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ ox71hcj....`,
               entities: [
                 { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5397782960512444700" },
                 { offset: 14, length: 2, type: "custom_emoji", custom_emoji_id: "5327975761833913214" },
@@ -1929,7 +1929,6 @@ app.post("/telegram-webhook", async (req, res) => {
               body: JSON.stringify({
                 chat_id: cbUserId,
                 text: chosen.text,
-                parse_mode: "HTML",
                 entities: chosen.entities
               })
             });
@@ -1937,6 +1936,8 @@ app.post("/telegram-webhook", async (req, res) => {
         }
         return;
       }
+
+
 
       if (callbackData.startsWith("net:")) {
         const netKey = callbackData.replace("net:", "");
