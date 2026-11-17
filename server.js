@@ -1241,8 +1241,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-
-      // 5ኛ ቁጥር፦ ተጠቃሚው የክፍያ ደረሰኝ (Screenshot) ሲልክ ወደ አድሚን የሚልክበት ክፍል
+          // 5ኛ ቁጥር፦ ተጠቃሚው የክፍያ ደረሰኝ (Screenshot) ሲልክ ወደ አድሚን የሚልክበት ክፍል (እንደ Sell ትዕዛዝ በአዝራሮች የተዋቀረ)
       if (user.step === "awaiting_buy_screenshot") {
         if (!msg.photo || msg.photo.length === 0) {
           await telegram("sendMessage", {
@@ -1257,41 +1256,83 @@ app.post("/telegram-webhook", async (req, res) => {
         const orderData = user.tempOrder || {};
 
         try {
-          user.step = "pending_admin_check";
+          // ትዕዛዙን በ database ውስጥ ፈልጎ ማግኘት
+          let order = await Order.findOne({ orderId: orderData.orderId });
+          if (!order) {
+            order = await Order.findOne({ userId: userId, status: "approved" }).sort({ createdAt: -1 });
+          }
+
+          if (order) {
+            order.customerProofFileId = fileId; // ደረሰኙን እንደ proof ማስቀመጥ
+            order.status = "pending"; // አድሚን እስኪያረጋግጥ pending ይሁን
+            await order.save();
+          }
+
+          user.step = "idle";
+          user.tempOrder = {};
           await user.save();
 
-          const successText = `🛫 የከፈሉበት ደረሰኝ በተሳካ ሁኔታ ለአድሚን ተልኳል!\n\n👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ደቂቃዎች ይጠብቁ።`;
+          // 💡 የሰርዝ አዝራሩ ጠፍቶ ዋናው ሜኑ (mainMenuKeyboard) እንዲመለስ ተደርጓል
+          const successText = `🛫 ትዕዛዝዎ እና የከፈሉበት ደረሰኝ በተሳካ ሁኔታ ደርሶናል!\n\n👨‍💻 መረጃዎ ወደ Admin ተልኳል፤ በጥቂት ደቂቃዎች ውስጥ ተጣርቶ ይላክሎታል።\n\n💯 UNIQUE P2P STOREን ስለመረጡ እናመሰግናለን!`;
+          const successEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5201691993775818138" },
+            { offset: 41, length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" },
+            { offset: 96, length: 2, type: "custom_emoji", custom_emoji_id: "5042297717242463211" }
+          ];
+
           await telegram("sendMessage", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               chat_id: userId,
               text: successText,
-              reply_markup: {
-                keyboard: [[{ text: "❌ ሰርዝ (Cancel)" }]],
-                resize_keyboard: true
-              }
+              entities: successEntities,
+              reply_markup: mainMenuKeyboard // 👈 የሰርዝ አዝራር ጠፍቷል፣ ዋናው ሜኑ ተመለሰ
             })
           });
+
+          const currentOrderId = order ? order.orderId : (orderData.orderId || "N/A");
 
           const adminProofCaption =
             `🚨 <b>አዲስ የ USDT ግዢ የክፍያ ደረሰኝ (Screenshot)</b>\n━━━━━━━━━━━━━━━━━━\n` +
             `👤 <b>ስም:</b> ${escapeHTML(msg.from.first_name || "ደንበኛ")} (@${msg.from.username || "የለውም"})\n` +
             `🆔 <b>User ID:</b> <code>${userId}</code>\n` +
-            `💵 <b>USDT:</b> ${orderData.amount || 0}\n` +
-            `💰 <b>Total:</b> ${orderData.total || 0} ETB\n` +
-            `🎯 <b>መቀበያ Wallet/ID:</b> <code>${escapeHTML(orderData.account || "")}</code>\n━━━━━━━━━━━━━━━━━━`;
+            `🆔 <b>Order ID:</b> <code>${currentOrderId}</code>\n` +
+            `💵 <b>USDT:</b> ${orderData.amount || (order ? order.amount : 0)}\n` +
+            `💰 <b>Total:</b> ${orderData.total || (order ? order.total : 0)} ETB\n` +
+            `🎯 <b>መቀበያ Wallet/ID:</b> <code>${escapeHTML(orderData.account || (order ? order.account : ""))}</code>\n━━━━━━━━━━━━━━━━━━\n` +
+            `🆔 <b>Order:</b> <code>${currentOrderId}</code>`;
 
-          await telegram("sendPhoto", {
+          // 💡 ልክ እንደ Sell ትዕዛዝ «ደረሰኝ ልከህ አጽድቅ» እና ሌሎች አዝራሮች እንዲኖሩት ተደርጓል
+          const adminReceiptKeyboard = {
+            inline_keyboard: [
+              [
+                { text: "📸 ደረሰኝ ልከህ አጽድቅ", callback_data: `receipt:${currentOrderId}` },
+                { text: "✅ Quick Approve", callback_data: `quick_approve:${currentOrderId}` }
+              ],
+              [
+                { text: "❌ Decline", callback_data: `decline:${currentOrderId}` },
+                { text: "🚫 Ban User", callback_data: `ban_user:${userId}` }
+              ]
+            ]
+          };
+
+          const sentAdminMsg = await telegram("sendPhoto", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               chat_id: ADMIN_CHAT_ID,
               photo: fileId,
               caption: adminProofCaption,
-              parse_mode: "HTML"
+              parse_mode: "HTML",
+              reply_markup: adminReceiptKeyboard
             })
           });
+
+          if (sentAdminMsg && sentAdminMsg.message_id && order) {
+            order.adminMessageId = sentAdminMsg.message_id;
+            await order.save();
+          }
         } catch (err) {
           console.error("Buy screenshot send error:", err);
         }
