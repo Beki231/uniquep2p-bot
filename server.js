@@ -750,13 +750,11 @@ app.post("/telegram-webhook", async (req, res) => {
           user.isJoined = true;
           await user.save();
         } else {
-          const joinText = `⚠️ቦቱን ለመጠቀም መጀመሪያ ቻናላችንን መቀላቀል አለብዎት!\n\n👇እባክዎ ከታች ያለውን ሊንክ ተጭነው ቻናሉን ከተቀላቀሉ በኋላ «✅ ተቀላቅያለሁ (Check)» የሚለውን ይጫኑ፡-`;
+          const joinText = `⚠️ ይቅርታ፣ ቦቱን ለመጠቀም መጀመሪያ ቻናላችንን መቀላቀል አለብዎት!\n\n👉 እባክዎ ከታች ያለውን ሊንክ ተጭነው ቻናሉን ከተቀላቀሉ በኋላ «🌟 ተቀላቅያለሁ (Check)» የሚለውን ይጫኑ፡-`;
           const joinEntities = [
             { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5447644880824181073" },
-            { offset: 2, length: 35, type: "bold" },
-            { offset: 39, length: 2, type: "custom_emoji", custom_emoji_id: "5231102735817918643" },
-            { offset: 81, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
-            { offset: 82, length: 19, type: "bold" }
+            { offset: 46, length: 2, type: "custom_emoji", custom_emoji_id: "5471978009449731768" },
+            { offset: 89, length: 2, type: "custom_emoji", custom_emoji_id: "6267118537752450044" }
           ];
 
           await telegram("sendMessage", {
@@ -792,13 +790,47 @@ app.post("/telegram-webhook", async (req, res) => {
 
       const text = msg.text ? msg.text.trim() : "";
 
-      if (text.startsWith("/start") || text === "❌ ሰርዝ (Cancel)") {
+      if (text.startsWith("/start")) {
         user.step = "idle";
         user.tempOrder = {};
         await user.save();
 
         const welcomeCaption = "🔥 እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!↔️\n\n ደህንነቱ የተጠበቀ🛡 እና እጅግ ፈጣን የ USDT💵 መገበያያ ቤት!⚡️\n\n ⬇️ የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-";
+        const welcomeEntities = await buildCustomEmojiEntities(welcomeCaption);
 
+        await telegram("sendPhoto", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: userId,
+            photo: BANNER_IMAGE_URL,
+            caption: welcomeCaption,
+            caption_entities: welcomeEntities,
+            reply_markup: mainMenuKeyboard
+          })
+        });
+        return;
+      }
+
+      if (text === "❌ ሰርዝ (Cancel)") {
+        user.step = "idle";
+        user.tempOrder = {};
+        await user.save();
+
+        const backConfirmText = "✅ ወደ ዋናው ሜኑ ተመልሰዋል!";
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: userId,
+            text: backConfirmText,
+            entities: [
+              { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" }
+            ]
+          })
+        });
+
+        const welcomeCaption = "🔥 እንኳን ወደ Unique P2P Store🇪🇹 በደህና መጡ!↔️\n\n ደህንነቱ የተጠበቀ🛡 እና እጅግ ፈጣን የ USDT💵 መገበያያ ቤት!⚡️\n\n ⬇️ የሚፈልጉትን አገልግሎት ከታች ካሉት አማራጮች ይምረጡ፡-";
         const welcomeEntities = await buildCustomEmojiEntities(welcomeCaption);
 
         await telegram("sendPhoto", {
@@ -828,8 +860,7 @@ app.post("/telegram-webhook", async (req, res) => {
             chat_id: userId,
             text: backConfirmText,
             entities: [
-              { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
-              { offset: 2, length: backConfirmText.length - 2, type: "bold" }
+              { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" }
             ]
           })
         });
@@ -1108,74 +1139,20 @@ app.post("/telegram-webhook", async (req, res) => {
             status: "awaiting_permission"
           });
 
-          user.step = "idle";
+          user.step = "awaiting_permission";
           user.tempOrder = {};
           await user.save();
 
-          let sentText = "";
-          let sentEntities = [];
-          const amtPart = `${orderData.amount} USDT (${totalFixed} ETB)`;
+          const sentText =
+            `🛫 ትዕዛዝዎ እና የከፈሉበት ደረሰኝ በተሳካ ሁኔታ ደርሶናል!\n\n` +
+            `👨‍💻 መረጃዎ ወደ Admin ተልኳል፤ በጥቂት ደቂቃዎች ውስጥ ተጣርቶ ይላክሎታል።\n\n` +
+            `💯 UNIQUE P2P STOREን ስለመረጡ እናመሰግናለን!`;
 
-          if (netKey === "binance") {
-            sentText =
-              `✔️ የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!\n\n` +
-              `💵 መጠን፦ ${amtPart}\n` +
-              `🖥 መቀበያዎ፦ ${walletAddress} ( 💸Binance ID)\n\n` +
-              `👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ሰከንዶችን ይጠብቁ፤ እንደተፈቀደ የክፍያ አካውንቶች ይላኩሎታል።`;
-
-            sentEntities = [
-              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
-              { offset: sentText.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
-              { offset: sentText.indexOf("🖥"), length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: sentText.indexOf(walletAddress), length: walletAddress.length, type: "code" },
-              { offset: sentText.indexOf("💸"), length: 2, type: "custom_emoji", custom_emoji_id: "5965273136747257327" },
-              { offset: sentText.indexOf("👨‍💻"), length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
-            ];
-          } else if (netKey === "ton") {
-            sentText =
-              `✔️ የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!\n\n` +
-              `💵 መጠን፦ ${amtPart}\n` +
-              `🖥 መቀበያዎ፦ ${walletAddress} (🤑TON)\n\n` +
-              `👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ሰከንዶችን ይጠብቁ፤ እንደተፈቀደ የክፍያ አካውንቶች ይላኩሎታል።`;
-
-            sentEntities = [
-              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "4956721670690702265" },
-              { offset: sentText.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "4956601935592424315" },
-              { offset: sentText.indexOf("🖥"), length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: sentText.indexOf(walletAddress), length: walletAddress.length, type: "code" },
-              { offset: sentText.indexOf("🤑"), length: 2, type: "custom_emoji", custom_emoji_id: "5350716797622442220" },
-              { offset: sentText.indexOf("👨‍💻"), length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
-            ];
-          } else if (netKey === "bep20") {
-            sentText =
-              `✔️ የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!\n\n` +
-              `💵 መጠን፦ ${amtPart}\n` +
-              `🖥 መቀበያዎ፦ ${walletAddress} (🔶Bep-20)\n\n` +
-              `👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ሰከንዶችን ይጠብቁ፤ እንደተፈቀደ የክፍያ አካውንቶች ይላኩሎታል።`;
-
-            sentEntities = [
-              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "4956721670690702265" },
-              { offset: sentText.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "4956601935592424315" },
-              { offset: sentText.indexOf("🖥"), length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: sentText.indexOf(walletAddress), length: walletAddress.length, type: "code" },
-              { offset: sentText.indexOf("🔶"), length: 2, type: "custom_emoji", custom_emoji_id: "5291786530606562380" },
-              { offset: sentText.indexOf("👨‍💻"), length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
-            ];
-          } else {
-            sentText =
-              `✔️ የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!\n\n` +
-              `💵 መጠን፦ ${amtPart}\n` +
-              `🖥 መቀበያዎ፦ ${walletAddress} (😟Aptos)\n\n` +
-              `👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ሰከንዶችን ይጠብቁ፤ እንደተፈቀደ የክፍያ አካውንቶች ይላኩሎታል።`;
-
-            sentEntities = [
-              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
-              { offset: sentText.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
-              { offset: sentText.indexOf("🖥"), length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: sentText.indexOf(walletAddress), length: walletAddress.length, type: "code" },
-              { offset: sentText.indexOf("😟"), length: 2, type: "custom_emoji", custom_emoji_id: "5327975761833913214" }
-            ];
-          }
+          const sentEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5201691993775818138" },
+            { offset: 41, length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" },
+            { offset: 96, length: 2, type: "custom_emoji", custom_emoji_id: "5042297717242463211" }
+          ];
 
           await telegram("sendMessage", {
             method: "POST",
@@ -1184,7 +1161,10 @@ app.post("/telegram-webhook", async (req, res) => {
               chat_id: userId,
               text: sentText,
               entities: sentEntities,
-              reply_markup: mainMenuKeyboard
+              reply_markup: {
+                keyboard: [[{ text: "❌ ሰርዝ (Cancel)" }]],
+                resize_keyboard: true
+              }
             })
           });
 
@@ -1699,45 +1679,15 @@ app.post("/telegram-webhook", async (req, res) => {
             status: "pending"
           });
 
-          user.step = "idle";
+          user.step = "pending";
           user.tempOrder = {};
           await user.save();
 
-          const isCBE = orderData.method === "CBE";
-          const topCheckId = "6267008582294705964";
-          const dollarEmojiId = isCBE ? "5965043124068687455" : "4956601935592424315";
-          const moneyBagEmojiId = isCBE ? "6267068789146260253" : "4958926882994127612";
-          const bankEmojiId = isCBE ? "5931351583827696128" : "5931638668031695373";
-
-          const headerTitle = "ትዕዛዝዎ በተሳካ ሁኔታ ደርሷል";
-          const amountStr = `${orderData.amount || 0} USDT`;
-          const totalStr = `${(Number(orderData.total) || 0).toLocaleString()} ETB`;
-          const accStr = `${orderData.account || ""}`;
-          const footerNote = "አድሚኑ ደረሰኙን አረጋግጦ ክፍያውን ወዲያውኑ ገቢ ያደርጋል";
-
-          const orderSuccessText =
-            `🎉 ${headerTitle}✅\n` +
-            `━━━━━━━━━━━━━━━━━━\n\n` +
-            `💵 መጠን: ${amountStr}\n` +
-            `💰 የሚከፈለው: ${totalStr}\n` +
-            `🖥 ወደ: ${orderData.method || ""}🏦 (${accStr})\n\n` +
-            `${footerNote}✅!`;
-
+          const orderSuccessText = `🛫 ትዕዛዝዎ እና የከፈሉበት ደረሰኝ በተሳካ ሁኔታ ደርሶናል!\n\n👨‍💻 መረጃዎ ወደ Admin ተልኳል፤ በጥቂት ደቂቃዎች ውስጥ ተጣርቶ ይላክሎታል።\n\n💯 UNIQUE P2P STOREን ስለመረጡ እናመሰግናለን!`;
           const orderSuccessEntities = [
-            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039529134078821602" },
-            { offset: orderSuccessText.indexOf(headerTitle), length: headerTitle.length, type: "bold" },
-            { offset: orderSuccessText.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: topCheckId },
-            { offset: orderSuccessText.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: dollarEmojiId },
-            { offset: orderSuccessText.indexOf("መጠን:"), length: 5, type: "bold" },
-            { offset: orderSuccessText.indexOf("💰"), length: 2, type: "custom_emoji", custom_emoji_id: moneyBagEmojiId },
-            { offset: orderSuccessText.indexOf("የሚከፈለው:"), length: 10, type: "bold" },
-            { offset: orderSuccessText.indexOf(totalStr), length: totalStr.length, type: "bold" },
-            { offset: orderSuccessText.indexOf("🖥"), length: 2, type: "custom_emoji", custom_emoji_id: "5282843764451195532" },
-            { offset: orderSuccessText.indexOf("ወደ:"), length: 3, type: "bold" },
-            { offset: orderSuccessText.indexOf("🏦"), length: 2, type: "custom_emoji", custom_emoji_id: bankEmojiId },
-            { offset: orderSuccessText.lastIndexOf(accStr), length: accStr.length, type: "code" },
-            { offset: orderSuccessText.indexOf(footerNote), length: footerNote.length, type: "italic" },
-            { offset: orderSuccessText.lastIndexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" }
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5201691993775818138" },
+            { offset: 41, length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" },
+            { offset: 96, length: 2, type: "custom_emoji", custom_emoji_id: "5042297717242463211" }
           ];
 
           await telegram("sendMessage", {
@@ -1747,7 +1697,10 @@ app.post("/telegram-webhook", async (req, res) => {
               chat_id: userId,
               text: orderSuccessText,
               entities: orderSuccessEntities,
-              reply_markup: mainMenuKeyboard
+              reply_markup: {
+                keyboard: [[{ text: "❌ ሰርዝ (Cancel)" }]],
+                resize_keyboard: true
+              }
             })
           });
 
@@ -2093,7 +2046,7 @@ app.post("/telegram-webhook", async (req, res) => {
 
         const [action, orderId] = callbackData.split(":");
         const order = await Order.findOne({ orderId });
-        if (!order || order.status !== "pending" && order.status !== "awaiting_permission") {
+        if (!order || (order.status !== "pending" && order.status !== "awaiting_permission")) {
           await clearAdminOrderButtons(callback.message?.message_id);
           await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "ይህ ትዕዛዝ ቀድሞ ተጠናቋል!" }) });
           return;
@@ -2181,12 +2134,24 @@ app.post("/telegram-webhook", async (req, res) => {
 
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
-          const declineMsg = `❌ ይቅርታ ትዕዛዝዎ ውድቅ ተደርጓል። ለጥያቄ @Aropc ያነጋግሩ✅️።`;
-          const declineEntities = [
-            { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "5040042498634810056" },
-            { offset: 29, length: 6, type: "mention" },
-            { offset: 41, length: 2, type: "custom_emoji", custom_emoji_id: "5870844977914842593" }
-          ];
+          const isBuyOrder = action === "buy_reject";
+          const declineMsg = isBuyOrder
+            ? `🫡 ይቅርታ፣ የ USDT ግዢ ጥያቄዎ በአድሚን ውድቅ ተደርጓል!\n\n💬 ለተጨማሪ መረጃ @Aropc ያነጋግሩ።`
+            : `🚫 ትዕዛዝዎ ውድቅ ተደርጓል! ❌\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n⚠️ የላኩት የክፍያ ደረሰኝ (Screenshot) ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።\n\n💬 ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc`;
+
+          const declineEntities = isBuyOrder
+            ? [
+                { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5434095036394387314" },
+                { offset: 42, length: 2, type: "custom_emoji", custom_emoji_id: "4956475826762679249" },
+                { offset: 55, length: 6, type: "mention" }
+              ]
+            : [
+                { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039671744172917707" },
+                { offset: 20, length: 1, type: "custom_emoji", custom_emoji_id: "5040042498634810056" },
+                { offset: 48, length: 2, type: "custom_emoji", custom_emoji_id: "5447644880824181073" },
+                { offset: 110, length: 2, type: "custom_emoji", custom_emoji_id: "5040036030414062506" },
+                { offset: 149, length: 6, type: "mention" }
+              ];
 
           await telegram("sendMessage", {
             method: "POST",
@@ -2194,7 +2159,8 @@ app.post("/telegram-webhook", async (req, res) => {
             body: JSON.stringify({
               chat_id: order.userId,
               text: declineMsg,
-              entities: declineEntities
+              entities: declineEntities,
+              reply_markup: mainMenuKeyboard
             })
           });
 
