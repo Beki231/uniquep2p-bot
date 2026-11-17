@@ -1106,7 +1106,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      if (user.step === "awaiting_buy_address") {
+          if (user.step === "awaiting_buy_address") {
         const walletAddress = text.trim(); 
 
         const orderId = `ORD-${Date.now()}`;
@@ -1135,46 +1135,12 @@ app.post("/telegram-webhook", async (req, res) => {
           user.tempOrder = { orderId, amount: orderData.amount, total: totalFixed, account: walletAddress };
           await user.save();
 
-          let sentText = "";
-          let sentEntities = [];
-
-          if (netKey === "binance") {
-            sentText = `✔️ የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!\n\n💵 መጠን፦ ${orderData.amount} USDT (${totalFixed} ETB)\n🖥 መቀበያዎ፦ ${walletAddress} ( 💸Binance ID)\n\n👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ሰከንዶችን ይጠብቁ፤ እንደተፈቀደ የክፍያ አካውንቶች ይላኩሎታል።`;
-            sentEntities = [
-              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
-              { offset: 30, length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
-              { offset: 60, length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: 70, length: walletAddress.length, type: "code" },
-              { offset: 72 + walletAddress.length, length: 2, type: "custom_emoji", custom_emoji_id: "5965273136747257327" },
-              { offset: 87 + walletAddress.length, length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
-            ];
-          } else if (netKey === "ton") {
-            sentText = `✔️ የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!\n\n💵 መጠን፦ ${orderData.amount} USDT (${totalFixed} ETB)\n🖥 መቀበያዎ፦ ${walletAddress} (🤑TON)\n\n👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ሰከንዶችን ይጠብቁ፤ እንደተፈቀደ የክፍያ አካውንቶች ይላኩሎታል።`;
-            sentEntities = [
-              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "4956721670690702265" },
-              { offset: 30, length: 2, type: "custom_emoji", custom_emoji_id: "4956601935592424315" },
-              { offset: 60, length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: 72 + walletAddress.length, length: 2, type: "custom_emoji", custom_emoji_id: "5350716797622442220" },
-              { offset: 80 + walletAddress.length, length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
-            ];
-          } else if (netKey === "bep20") {
-            sentText = `✔️ የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!\n\n💵 መጠን፦ ${orderData.amount} USDT (${totalFixed} ETB)\n🖥 መቀበያዎ፦ ${walletAddress} (🔶Bep-20)\n\n👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ሰከንዶችን ይጠብቁ፤ እንደተፈቀደ የክፍያ አካውንቶች ይላኩሎታል።`;
-            sentEntities = [
-              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "4956721670690702265" },
-              { offset: 30, length: 2, type: "custom_emoji", custom_emoji_id: "4956601935592424315" },
-              { offset: 60, length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: 72 + walletAddress.length, length: 2, type: "custom_emoji", custom_emoji_id: "5291786530606562380" },
-              { offset: 83 + walletAddress.length, length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
-            ];
-          } else {
-            sentText = `✔️ የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!\n\n💵 መጠን፦ ${orderData.amount} USDT (${totalFixed} ETB)\n🖥 መቀበያዎ፦ ${walletAddress} (😟Aptos)\n\n👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ሰከንዶችን ይጠብቁ፤ እንደተፈቀደ የክፍያ አካውንቶች ይላኩሎታል።`;
-            sentEntities = [
-              { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
-              { offset: 30, length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
-              { offset: 60, length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: 72 + walletAddress.length, length: 2, type: "custom_emoji", custom_emoji_id: "5327975761833913214" }
-            ];
-          }
+          // 💡 Entities መጠቀም ቀርቶ በ HTML <b> እና <code> ታጎች ተተክቷል (ይህም Binance ID-ን ጨምሮ ሁሉንም ኔትወርኮች ከክራሽ ነፃ ያደርጋል)
+          const sentText = 
+            `✔️ <b>የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!</b>\n\n` +
+            `💵 መጠን፦ <b>${orderData.amount} USDT</b> (${totalFixed} ETB)\n` +
+            `🖥 መቀበያዎ፦ <code>${escapeHTML(walletAddress)}</code> (${escapeHTML(netName)})\n\n` +
+            `👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ሰከንዶችን ይጠብቁ፤ እንደተፈቀደ የክፍያ አካውንቶች ይላኩሎታል።`;
 
           await telegram("sendMessage", {
             method: "POST",
@@ -1182,7 +1148,7 @@ app.post("/telegram-webhook", async (req, res) => {
             body: JSON.stringify({
               chat_id: userId,
               text: sentText,
-              entities: sentEntities,
+              parse_mode: "HTML",
               reply_markup: {
                 keyboard: [[{ text: "❌ ሰርዝ (Cancel)" }]],
                 resize_keyboard: true
@@ -1198,15 +1164,15 @@ app.post("/telegram-webhook", async (req, res) => {
           };
           const netDisplay = netIconMap[netKey] || netName;
           const userTag = msg.from.username ? `@${msg.from.username}` : "የለውም";
-      
+
           const adminBuyReqText =
             `🔔 <b>አዲስ የ USDT ግዢ ጥያቄ ደርሷል (ፍቃድ ይጠይቃል)!</b>\n` +
             `━━━━━━━━━━━━━━━━━━━━\n` +
             `🆔 <b>ትዕዛዝ ቁጥር፦</b> <code>${orderId}</code>\n` +
             `👤 <b>ደንበኛ፦</b> ${userTag} (${escapeHTML(msg.from.first_name || "ደንበኛ")})\n` +
             `🆔 <b>ID፦</b> <code>${userId}</code>\n` +
-            `💵 <b>የሚገዛው መጠን፦</b> ${orderData.amount} USDT\n` +
-            `💰 <b>የሚከፍለው ብር፦</b> ${totalFixed} ETB\n` +
+            `💵 <b>የሚገዛው መጠን፦</b> <b>${orderData.amount} USDT</b>\n` +
+            `💰 <b>የሚከፍለው ብር፦</b> <b>${totalFixed} ETB</b>\n` +
             `🔗 <b>ኔትወርክ፦</b> ${netDisplay}\n` +
             `🎯 <b>መቀበያ Wallet/ID፦</b> <code>${escapeHTML(walletAddress)}</code>\n\n` +
             `👉 <i>ይህ ሰው ክፍያ እንዲፈጽም ይፈቀድ?</i>`;
@@ -1235,10 +1201,10 @@ app.post("/telegram-webhook", async (req, res) => {
           }
         } catch (err) {
           console.error("Buy order save error:", err.message);
-          // ምንም አይነት የውሸት ኤረር ለተጠቃሚው አልተላከም!
         }
         return;
       }
+
 
       // 5ኛ ቁጥር፦ ተጠቃሚው የክፍያ ደረሰኝ (Screenshot) ሲልክ ወደ አድሚን የሚልክበት ክፍል
       if (user.step === "awaiting_buy_screenshot") {
