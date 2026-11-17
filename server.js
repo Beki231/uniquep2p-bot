@@ -2121,25 +2121,15 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
       
-                  
-                    // 🟢 የተስተካከለ እና ሁሉንም የአፕሩቭ አይነቶች የሚይዝ ሎጂክ
-        if (
-          action === "quick_approve" || 
-          action === "buy_allow" || 
-          action === "approve" || 
-          action.includes("approve") || 
-          action.includes("allow")
-        ) {
+              if (action === "quick_approve" || action === "buy_allow") {
           order.status = "approved";
-          await order.save();
-
-          // 💡 የተጠቃሚውን ID በ String በማመሳሰል ዳታ እንዳይጠፋ ማድረግ
-          const buyingUser = await User.findOne({ telegramId: String(order.userId) });
+          const buyingUser = await User.findOne({ telegramId: order.userId });
           if (buyingUser) {
             buyingUser.step = "awaiting_buy_screenshot";
             buyingUser.tempOrder = { amount: order.amount, total: order.total, account: order.account };
             await buyingUser.save();
           }
+          await order.save();
 
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
@@ -2163,7 +2153,7 @@ app.post("/telegram-webhook", async (req, res) => {
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
             `💵 የሚገዙት መጠን፦ ${order.amount} USDT\n` +
             `💰 የሚከፍሉት ጠቅላላ ብር፦ ${Number(order.total || 0).toLocaleString()} ETB\n` +
-            `🖥 መቀበያዎ፦ ${order.account} (💰${netDisplayName})\n\n` +
+            `🖥 መቀበያዎ፦ ${order.account} (💰Binance ID)\n\n` +
             `⬇️ እባክዎ ትክክለኛውን ብር ከታች ባሉት አማራጮች ገቢ ያድርጉ፡-\n\n` +
             `🏦 Telebirr፦ 0949241461\n` +
             `👤 ስም፦ Bereket\n\n` +
@@ -2190,37 +2180,27 @@ app.post("/telegram-webhook", async (req, res) => {
             { offset: 307 + (accountLength - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5274055917766202507" }
           ];
 
-          try {
-            await telegram("sendMessage", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: order.userId,
-                text: approvedText,
-                entities: approvedEntities
-              })
-            });
-          } catch (sendErr) {
-            console.error("Failed to send approval message to user:", sendErr.message);
-          }
+          await telegram("sendMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: order.userId,
+              text: approvedText,
+              entities: approvedEntities
+            })
+          });
 
           await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "✅ Approved!" }) });
-          return;
+          return; // 💡 ይህ ትክክለኛ ማጠናቀቂያ (return) ጨምረናል
         }
 
-        // 🔴 የተስተካከለ የ Decline እና Reject ማስተናገጃ
-        if (
-          action === "decline" || 
-          action === "buy_reject" || 
-          action.includes("decline") || 
-          action.includes("reject")
-        ) {
+        if (action === "decline" || action === "buy_reject") {
           order.status = "declined";
           await order.save();
 
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
-          const isBuyOrder = action === "buy_reject" || action.includes("buy_reject") || action.includes("reject");
+          const isBuyOrder = action === "buy_reject";
           const declineMsg = isBuyOrder
             ? `🫡 ይቅርታ፣ የ USDT ግዢ ጥያቄዎ በአድሚን ውድቅ ተደርጓል!\n\n💬 ለተጨማሪ መረጃ @Aropc ያነጋግሩ።`
             : `🚫 ትዕዛዝዎ ውድቅ ተደርጓል! ❌\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n⚠️ የላኩት የክፍያ ደረሰኝ (Screenshot) ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።\n\n💬 ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc`;
@@ -2239,24 +2219,20 @@ app.post("/telegram-webhook", async (req, res) => {
                 { offset: 149, length: 6, type: "mention" }
               ];
 
-          try {
-            await telegram("sendMessage", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: order.userId,
-                text: declineMsg,
-                entities: declineEntities,
-                reply_markup: mainMenuKeyboard
-              })
-            });
-          } catch (sendErr) {
-            console.error("Failed to send decline message to user:", sendErr.message);
-          }
+          await telegram("sendMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: order.userId,
+              text: declineMsg,
+              entities: declineEntities,
+              reply_markup: mainMenuKeyboard
+            })
+          });
 
           await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "❌ Declined!" }) });
           return;
-        }
+        }         
       }
     }
   } catch (err) {
