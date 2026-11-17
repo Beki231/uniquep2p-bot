@@ -2223,6 +2223,63 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
+        // ================= BUY ORDER COMPLETE (BUY_DONE) =================
+        if (action === "buy_done") {
+          order.status = "approved";
+          await order.save();
+
+          await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
+
+          await telegram("answerCallbackQuery", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              callback_query_id: callback.id,
+              text: "✅ Order Completed!"
+            })
+          });
+
+          const netKey = order.networkKey || "binance";
+          let netDisplayName = "Binance";
+          if (netKey === "bep20") netDisplayName = "Bep-20";
+          else if (netKey === "ton") netDisplayName = "TON";
+          else if (netKey === "aptos") netDisplayName = "Aptos";
+
+          const finalMsg =
+            `✔️ የትዕዛዝ ማረጋገጫ እና ደረሰኝ፦\n\n` +
+            `የ${order.amount} USDT💵 ግዥ ትዕዛዝዎ ጸድቋል!✅\n\n` +
+            ` 🍾 ${order.amount}$💵  ወደ ${netDisplayName}💰 አካውንትዎ ገቢ ተደርጓል።\n\n` +
+            ` ከUnique P2P ጋር ስለሰሩ እናመሰግናለን❤️‍🔥!`;
+
+          const finalEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "6267225207560214192" },
+            { offset: finalMsg.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5965043124068687455" },
+            { offset: finalMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
+            { offset: finalMsg.indexOf("🍾"), length: 2, type: "custom_emoji", custom_emoji_id: "5042274086332400375" },
+            { offset: finalMsg.lastIndexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "4956601935592424315" },
+            { offset: finalMsg.indexOf(netDisplayName), length: netDisplayName.length, type: "bold" },
+            { offset: finalMsg.indexOf("💰"), length: 2, type: "custom_emoji", custom_emoji_id: "5296437653770608702" },
+            { offset: finalMsg.indexOf("❤️‍🔥"), length: 5, type: "custom_emoji", custom_emoji_id: "5042225965518816316" }
+          ];
+
+          try {
+            await telegram("sendMessage", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: order.userId,
+                text: finalMsg,
+                entities: finalEntities,
+                reply_markup: mainMenuKeyboard
+              })
+            });
+          } catch (sendErr) {
+            console.error("Failed to send completion message to user:", sendErr.message);
+          }
+
+          return;
+        }
+
         // 🔴 DECLINE / BUY REJECT (በከፍተኛ ጥራት ባላቸው Custom Emojis የተዋበ)
         if (action === "decline" || action === "buy_reject") {
           order.status = "declined";
@@ -2231,23 +2288,15 @@ app.post("/telegram-webhook", async (req, res) => {
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
           const isBuyOrder = action === "buy_reject";
-          const declineMsg = isBuyOrder
-            ? `🫡 ይቅርታ፣ የ USDT ግዢ ጥያቄዎ በአድሚን ውድቅ ተደርጓል!\n\n💬 ለተጨማሪ መረጃ @Aropc ያነጋግሩ።`
-            : `🚫 ትዕዛዝዎ ውድቅ ተደርጓል! ❌\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n⚠️ የላኩት የክፍያ ደረሰኝ (Screenshot) ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።\n\n💬 ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc`;
+          const declineMsg = `🚫 ትዕዛዝዎ ውድቅ ተደርጓል! ❌\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n⚠️ የላኩት የክፍያ ደረሰኝ (Screenshot) ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።\n\n💬 ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc`;
 
-          const declineEntities = isBuyOrder
-            ? [
-                { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5434095036394387314" },
-                { offset: 42, length: 2, type: "custom_emoji", custom_emoji_id: "4956475826762679249" },
-                { offset: 55, length: 6, type: "mention" }
-              ]
-            : [
-                { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039671744172917707" },
-                { offset: 20, length: 1, type: "custom_emoji", custom_emoji_id: "5040042498634810056" },
-                { offset: 48, length: 2, type: "custom_emoji", custom_emoji_id: "5447644880824181073" },
-                { offset: 110, length: 2, type: "custom_emoji", custom_emoji_id: "5040036030414062506" },
-                { offset: 149, length: 6, type: "mention" }
-              ];
+          const declineEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039671744172917707" },
+            { offset: 20, length: 1, type: "custom_emoji", custom_emoji_id: "5040042498634810056" },
+            { offset: 48, length: 2, type: "custom_emoji", custom_emoji_id: "5447644880824181073" },
+            { offset: 110, length: 2, type: "custom_emoji", custom_emoji_id: "5040036030414062506" },
+            { offset: 149, length: 6, type: "mention" }
+          ];
 
           await telegram("sendMessage", {
             method: "POST",
