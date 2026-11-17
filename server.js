@@ -2140,7 +2140,7 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-        if (action === "quick_approve" || action === "buy_allow") {
+                if (action === "quick_approve" || action === "buy_allow") {
           order.status = "approved";
           const buyingUser = await User.findOne({ telegramId: order.userId });
           if (buyingUser) {
@@ -2153,34 +2153,51 @@ app.post("/telegram-webhook", async (req, res) => {
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
           const netKey = order.networkKey || "binance";
-          let netEmoji = "💰"; 
+          let netEmojiId = "5296437653770608702"; 
           let netDisplayName = "Binance ID";
 
           if (netKey === "bep20") {
-            netEmoji = "🔶";
+            netEmojiId = "5291786530606562380";
             netDisplayName = "Bep-20";
           } else if (netKey === "ton") {
-            netEmoji = "🤑";
+            netEmojiId = "5350716797622442220";
             netDisplayName = "TON";
           } else if (netKey === "aptos") {
-            netEmoji = "😟";
+            netEmojiId = "5327975761833913214";
             netDisplayName = "Aptos";
           }
 
-          // HTML parse_mode በመጠቀም መጠን፣ ጠቅላላ ብር እና አካውንት ቁጥሮች በሙሉ Bold እና Mono (code) እንዲወጡ ተደርጓል
+          // የላካቸውን ትክክለኛ ጽሁፍ እና የደንበኛውን ትክክለኛ አካውንት/መጠን በመጠቀም
           const approvedText =
             `✔️ ትዕዛዝዎ ተፈቅዷል፤ ክፍያ መፈጸም ይችላሉ!\n` +
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-            `💵 የሚገዙት መጠን፦ <b>${order.amount} USDT</b>\n` +
-            `💰 የሚከፍሉት ጠቅላላ ብር፦ <b>${Number(order.total || 0).toLocaleString()} ETB</b>\n` +
-            `🖥 መቀበያዎ፦ <code>${escapeHTML(order.account)}</code> (${netEmoji}${netDisplayName})\n\n` +
+            `💵 የሚገዙት መጠን፦ ${order.amount} USDT\n` +
+            `💰 የሚከፍሉት ጠቅላላ ብር፦ ${Number(order.total || 0).toLocaleString()} ETB\n` +
+            `🖥 መቀበያዎ፦ ${order.account} (💰Binance ID)\n\n` +
             `⬇️ እባክዎ ትክክለኛውን ብር ከታች ባሉት አማራጮች ገቢ ያድርጉ፡-\n\n` +
-            `🏦 Telebirr፦ <code>0949241461</code>\n` +
-            `👤 ስም፦ <b>Bereket</b>\n\n` +
-            `🏦 CBE ንግድ ባንክ፦ <code>1000725377421</code>\n` +
-            `👤 ስም፦ <b>Bereket Wondimhun</b>\n\n` +
+            `🏦 Telebirr፦ 0949241461\n` +
+            `👤 ስም፦ Bereket\n\n` +
+            `🏦 CBE ንግድ ባንክ፦ 1000725377421\n` +
+            `👤 ስም፦ Bereket Wondimhun\n\n` +
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
             `🗓 ክፍያውን እንደፈጸሙ የከፈሉበትን ደረሰኝ (Screenshot) ከስር ይላኩ፡-`;
+
+          // የላካቸውን ትክክለኛ የ JSON entities ኦፍሴቶች እና ርዝመቶች በመጠቀም
+          const approvedEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
+            { offset: 56, length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
+            { offset: 78, length: 2, type: "custom_emoji", custom_emoji_id: "5039789890133296083" },
+            { offset: 106, length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
+            { offset: 116, length: String(order.account).length, type: "phone_number" },
+            { offset: 127 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: netEmojiId },
+            { offset: 142 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+            { offset: 186 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
+            { offset: 199 + (String(order.account).length - 9), length: 10, type: "phone_number" },
+            { offset: 210 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 226 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5796351978506298393" },
+            { offset: 256 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 307 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5274055917766202507" }
+          ];
 
           await telegram("sendMessage", {
             method: "POST",
@@ -2188,7 +2205,7 @@ app.post("/telegram-webhook", async (req, res) => {
             body: JSON.stringify({
               chat_id: order.userId,
               text: approvedText,
-              parse_mode: "HTML"
+              entities: approvedEntities
             })
           });
 
@@ -2207,13 +2224,28 @@ app.post("/telegram-webhook", async (req, res) => {
             ? `🫡 ይቅርታ፣ የ USDT ግዢ ጥያቄዎ በአድሚን ውድቅ ተደርጓል!\n\n💬 ለተጨማሪ መረጃ @Aropc ያነጋግሩ።`
             : `🚫 ትዕዛዝዎ ውድቅ ተደርጓል! ❌\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n⚠️ የላኩት የክፍያ ደረሰኝ (Screenshot) ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።\n\n💬 ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc`;
 
+          // የላካቸውን ትክክለኛ የ Reject JSON entities ኦፍሴቶች በመጠቀም
+          const declineEntities = isBuyOrder
+            ? [
+                { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5434095036394387314" },
+                { offset: 42, length: 2, type: "custom_emoji", custom_emoji_id: "4956475826762679249" },
+                { offset: 55, length: 6, type: "mention" }
+              ]
+            : [
+                { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039671744172917707" },
+                { offset: 20, length: 1, type: "custom_emoji", custom_emoji_id: "5040042498634810056" },
+                { offset: 48, length: 2, type: "custom_emoji", custom_emoji_id: "5447644880824181073" },
+                { offset: 110, length: 2, type: "custom_emoji", custom_emoji_id: "5040036030414062506" },
+                { offset: 149, length: 6, type: "mention" }
+              ];
+
           await telegram("sendMessage", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               chat_id: order.userId,
               text: declineMsg,
-              parse_mode: "HTML",
+              entities: declineEntities,
               reply_markup: mainMenuKeyboard
             })
           });
@@ -2221,17 +2253,3 @@ app.post("/telegram-webhook", async (req, res) => {
           await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "❌ Declined!" }) });
           return;
         }
-      }
-    }
-  } catch (err) {
-    console.error("Webhook processing error:", err.message);
-  }
-});
-
-process.on("unhandledRejection", err => console.error("Unhandled Rejection:", err.message));
-process.on("uncaughtException", err => console.error("Uncaught Exception:", err.message));
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Normal Bot running on port ${PORT}`);
-});
