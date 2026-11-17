@@ -2210,7 +2210,7 @@ app.post("/telegram-webhook", async (req, res) => {
           });
 
           await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "✅ Approved!" }) });
-          return;
+          return; // 💡 ይህ ትክክለኛ ማጠናቀቂያ (return) ጨምረናል
         }
 
         if (action === "decline" || action === "buy_reject") {
