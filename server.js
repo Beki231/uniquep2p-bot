@@ -2140,7 +2140,7 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-                if (action === "quick_approve" || action === "buy_allow") {
+        if (action === "quick_approve" || action === "buy_allow") {
           order.status = "approved";
           const buyingUser = await User.findOne({ telegramId: order.userId });
           if (buyingUser) {
@@ -2167,7 +2167,6 @@ app.post("/telegram-webhook", async (req, res) => {
             netDisplayName = "Aptos";
           }
 
-          // የላካቸውን ትክክለኛ ጽሁፍ እና የደንበኛውን ትክክለኛ አካውንት/መጠን በመጠቀም
           const approvedText =
             `✔️ ትዕዛዝዎ ተፈቅዷል፤ ክፍያ መፈጸም ይችላሉ!\n` +
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -2182,21 +2181,22 @@ app.post("/telegram-webhook", async (req, res) => {
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
             `🗓 ክፍያውን እንደፈጸሙ የከፈሉበትን ደረሰኝ (Screenshot) ከስር ይላኩ፡-`;
 
-          // የላካቸውን ትክክለኛ የ JSON entities ኦፍሴቶች እና ርዝመቶች በመጠቀም
+          const accountLength = String(order.account || "").length;
+
           const approvedEntities = [
             { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
             { offset: 56, length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
             { offset: 78, length: 2, type: "custom_emoji", custom_emoji_id: "5039789890133296083" },
             { offset: 106, length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-            { offset: 116, length: String(order.account).length, type: "phone_number" },
-            { offset: 127 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: netEmojiId },
-            { offset: 142 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
-            { offset: 186 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
-            { offset: 199 + (String(order.account).length - 9), length: 10, type: "phone_number" },
-            { offset: 210 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
-            { offset: 226 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5796351978506298393" },
-            { offset: 256 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
-            { offset: 307 + (String(order.account).length - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5274055917766202507" }
+            { offset: 116, length: accountLength, type: "phone_number" },
+            { offset: 127 + (accountLength - 9), length: 2, type: "custom_emoji", custom_emoji_id: netEmojiId },
+            { offset: 142 + (accountLength - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+            { offset: 186 + (accountLength - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
+            { offset: 199 + (accountLength - 9), length: 10, type: "phone_number" },
+            { offset: 210 + (accountLength - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 226 + (accountLength - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5796351978506298393" },
+            { offset: 256 + (accountLength - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 307 + (accountLength - 9), length: 2, type: "custom_emoji", custom_emoji_id: "5274055917766202507" }
           ];
 
           await telegram("sendMessage", {
@@ -2224,7 +2224,6 @@ app.post("/telegram-webhook", async (req, res) => {
             ? `🫡 ይቅርታ፣ የ USDT ግዢ ጥያቄዎ በአድሚን ውድቅ ተደርጓል!\n\n💬 ለተጨማሪ መረጃ @Aropc ያነጋግሩ።`
             : `🚫 ትዕዛዝዎ ውድቅ ተደርጓል! ❌\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n⚠️ የላኩት የክፍያ ደረሰኝ (Screenshot) ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።\n\n💬 ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc`;
 
-          // የላካቸውን ትክክለኛ የ Reject JSON entities ኦፍሴቶች በመጠቀም
           const declineEntities = isBuyOrder
             ? [
                 { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5434095036394387314" },
