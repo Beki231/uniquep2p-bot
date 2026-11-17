@@ -2140,14 +2140,27 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-                const callbackData = callback.data || "";
-        const action = callbackData.includes(":") ? callbackData.split(":")[0] : callbackData;
-        
-        let order = await Order.findOne({ adminMessageId: callback.message?.message_id });
+                                let action = "";
+        let orderId = "";
+        if (callback && callback.data) {
+          const parts = callback.data.split(":");
+          action = parts[0] || "";
+          orderId = parts[1] || "";
+        }
+
+
+        let order = await Order.findOne({ orderId });
+        if (!order) {
+          order = await Order.findOne({ adminMessageId: callback.message?.message_id });
+        }
 
         if (!order || (order.status !== "pending" && order.status !== "awaiting_permission")) {
-          await clearAdminOrderButtons(callback.message?.message_id);
-          await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "ይህ ትዕዛዝ ቀድሞ ተጠናቋል ወይም አልተገኘም!" }) });
+          if (callback && callback.message) {
+            await clearAdminOrderButtons(callback.message.message_id);
+          }
+          if (callback && callback.id) {
+            await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "ይህ ትዕዛዝ ቀድሞ ተጠናቋል ወይም አልተገኘም!" }) });
+          }
           return;
         }
 
@@ -2277,5 +2290,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Normal Bot running on port ${PORT}`);
 });
-
-           
