@@ -375,7 +375,7 @@ app.post("/telegram-webhook", async (req, res) => {
     const senderId = String(msg?.from?.id || callback?.from?.id || "").trim();
     const isAdmin = senderId === ADMIN_CHAT_ID;
 
-    // 1. አድሚን ደረሰኝ ፎቶ ሲልክ
+    // 1. አድሚን ደረሰኝ ፎቶ ሲልክ (ለ sell ትዕዛዞች)
     if (msg && isAdmin && pendingReceiptOrder) {
       if (msg.photo && msg.photo.length > 0) {
         const order = await Order.findOne({ orderId: pendingReceiptOrder });
@@ -1303,15 +1303,15 @@ app.post("/telegram-webhook", async (req, res) => {
             `🎯 <b>መቀበያ Wallet/ID:</b> <code>${escapeHTML(orderData.account || (order ? order.account : ""))}</code>\n━━━━━━━━━━━━━━━━━━\n` +
             `🆔 <b>Order:</b> <code>${currentOrderId}</code>`;
 
-          // 💡 ልክ እንደ Sell ትዕዛዝ «ደረሰኝ ልከህ አጽድቅ» እና ሌሎች አዝራሮች እንዲኖሩት ተደርጓል
+          // 💡 ልክ እንደ Sell ትዕዛዝ «ደረሰኝ ልከህ አጽድቅ» (ይህም በቀጥታ buy_done እንዲሰራ ይደረጋል) እና ሌሎች አዝራሮች
           const adminReceiptKeyboard = {
             inline_keyboard: [
               [
-                { text: "📸 ደረሰኝ ልከህ አጽድቅ", callback_data: `receipt:${currentOrderId}` },
-                { text: "✅ Quick Approve", callback_data: `quick_approve:${currentOrderId}` }
+                { text: "📸 ደረሰኝ ልከህ አጽድቅ", callback_data: `buy_done:${currentOrderId}` },
+                { text: "✅ Quick Approve", callback_data: `buy_done:${currentOrderId}` }
               ],
               [
-                { text: "❌ Decline", callback_data: `decline:${currentOrderId}` },
+                { text: "❌ Decline", callback_data: `buy_reject:${currentOrderId}` },
                 { text: "🚫 Ban User", callback_data: `ban_user:${userId}` }
               ]
             ]
