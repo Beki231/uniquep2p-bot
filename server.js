@@ -1106,7 +1106,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-          if (user.step === "awaiting_buy_address") {
+       if (user.step === "awaiting_buy_address") {
         const walletAddress = text.trim(); 
 
         const orderId = `ORD-${Date.now()}`;
@@ -1135,12 +1135,48 @@ app.post("/telegram-webhook", async (req, res) => {
           user.tempOrder = { orderId, amount: orderData.amount, total: totalFixed, account: walletAddress };
           await user.save();
 
-          // 💡 Entities መጠቀም ቀርቶ በ HTML <b> እና <code> ታጎች ተተክቷል (ይህም Binance ID-ን ጨምሮ ሁሉንም ኔትወርኮች ከክራሽ ነፃ ያደርጋል)
+          // 💡 እንደየ ኔትወርኩ ትክክለኛ ኢሞጂ እና ጽሁፍ በ HTML Parse Mode ይስተካከላል
+          let netTagDisplay = "💸 Binance ID";
+          let checkmarkEmojiId = "5039844895779455925";
+          let usdtEmojiId = "5040025580758631490";
+          let monitorEmojiId = "5039579582764680065";
+          let networkEmojiId = "5965273136747257327";
+
+          if (netKey === "ton") {
+            netTagDisplay = "🤑TON";
+            checkmarkEmojiId = "4956721670690702265";
+            usdtEmojiId = "4956601935592424315";
+            monitorEmojiId = "5039579582764680065";
+            networkEmojiId = "5350716797622442220";
+          } else if (netKey === "bep20") {
+            netTagDisplay = "🔶Bep-20";
+            checkmarkEmojiId = "4956721670690702265";
+            usdtEmojiId = "4956601935592424315";
+            monitorEmojiId = "5039579582764680065";
+            networkEmojiId = "5291786530606562380";
+          } else if (netKey === "aptos") {
+            netTagDisplay = "😟Aptos";
+            checkmarkEmojiId = "5039844895779455925";
+            usdtEmojiId = "5040025580758631490";
+            monitorEmojiId = "5039579582764680065";
+            networkEmojiId = "5327975761833913214";
+          }
+
           const sentText = 
-            `✔️ <b>የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!</b>\n\n` +
-            `💵 መጠን፦ <b>${orderData.amount} USDT</b> (${totalFixed} ETB)\n` +
-            `🖥 መቀበያዎ፦ <code>${escapeHTML(walletAddress)}</code> (${escapeHTML(netName)})\n\n` +
+            `✔️ የትዕዛዝ ጥያቄዎ ወደ Admin ተልኳል!\n\n` +
+            `💵 መጠን፦ ${orderData.amount} USDT (${totalFixed} ETB)\n` +
+            `🖥 መቀበያዎ፦ ${walletAddress} (${netTagDisplay})\n\n` +
             `👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ሰከንዶችን ይጠብቁ፤ እንደተፈቀደ የክፍያ አካውንቶች ይላኩሎታል።`;
+
+          // የላካቸውን ትክክለኛ የኢንቲቲ ርዝመቶች እና ኦፍሴቶች በመጠቀም የሚመነጭ ደህንነቱ የተጠበቀ ኤንቲቲ
+          const sentEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: checkmarkEmojiId },
+            { offset: 30, length: 2, type: "custom_emoji", custom_emoji_id: usdtEmojiId },
+            { offset: 60, length: 2, type: "custom_emoji", custom_emoji_id: monitorEmojiId },
+            { offset: 70, length: walletAddress.length, type: "code" },
+            { offset: 72 + walletAddress.length, length: 2, type: "custom_emoji", custom_emoji_id: networkEmojiId },
+            { offset: 75 + walletAddress.length + netTagDisplay.length, length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
+          ];
 
           await telegram("sendMessage", {
             method: "POST",
@@ -1148,7 +1184,7 @@ app.post("/telegram-webhook", async (req, res) => {
             body: JSON.stringify({
               chat_id: userId,
               text: sentText,
-              parse_mode: "HTML",
+              entities: sentEntities,
               reply_markup: {
                 keyboard: [[{ text: "❌ ሰርዝ (Cancel)" }]],
                 resize_keyboard: true
