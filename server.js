@@ -387,27 +387,36 @@ app.post("/telegram-webhook", async (req, res) => {
 
           await clearAdminOrderButtons(order.adminMessageId);
 
-          const bankEmojiId = order.method === "CBE" ? "5805572156599312646" : "5931638668031695373";
-          const amountStr = `${order.amount} USDT`;
-          const totalStr = `${Number(order.total || 0).toLocaleString()} ETB`;
-          const headerStr = "የትዕዛዝ ማረጋገጫ እና ደረሰኝ፦";
+          const netKey = order.networkKey || "binance";
+          let netEmojiId = "5296437653770608702"; // 💰 Binance
+          let netDisplayName = "Binance";
 
-          const userMsg =
-            `✔️ ${headerStr}\n\n` +
-            `የ${amountStr}💵 ሽያጭ ትዕዛዝዎ ጸድቋል!✅\n\n` +
-            ` 🍾${totalStr} ወደ ${order.method}🏦 አካውንትዎ ገቢ ተደርጓል።\n\n` +
+          if (netKey === "bep20") {
+            netEmojiId = "5291786530606562380";
+            netDisplayName = "Bep-20";
+          } else if (netKey === "ton") {
+            netEmojiId = "5350716797622442220";
+            netDisplayName = "TON";
+          } else if (netKey === "aptos") {
+            netEmojiId = "5327975761833913214";
+            netDisplayName = "Aptos";
+          }
+
+          const amountStr = `${order.amount} USDT`;
+          const finalMsg =
+            `✔️ የትዕዛዝ ማረጋገጫ እና ደረሰኝ፦\n\n` +
+            `የ${amountStr} ግዥ ትዕዛዝዎ ጸድቋል!✅\n\n` +
+            ` 🍾 ${order.amount}$  ወደ ${netDisplayName} አካውንትዎ ገቢ ተደርጓል።\n\n` +
             ` ከUnique P2P ጋር ስለሰሩ እናመሰግናለን❤️‍🔥!`;
 
-          const userEntities = [
-            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
-            { offset: userMsg.indexOf(headerStr), length: headerStr.length, type: "bold" },
-            { offset: userMsg.indexOf(amountStr), length: amountStr.length, type: "bold" },
-            { offset: userMsg.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
-            { offset: userMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
-            { offset: userMsg.indexOf("🍾"), length: 2, type: "custom_emoji", custom_emoji_id: "5042274086332400375" },
-            { offset: userMsg.indexOf(totalStr), length: totalStr.length, type: "bold" },
-            { offset: userMsg.indexOf("🏦"), length: 2, type: "custom_emoji", custom_emoji_id: bankEmojiId },
-            { offset: userMsg.indexOf("❤️‍🔥"), length: 5, type: "custom_emoji", custom_emoji_id: "4956222745814762495" }
+          const finalEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "6267225207560214192" },
+            { offset: finalMsg.indexOf("💵") !== -1 ? finalMsg.indexOf("💵") : 15, length: 2, type: "custom_emoji", custom_emoji_id: "5965043124068687455" },
+            { offset: finalMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
+            { offset: finalMsg.indexOf("🍾"), length: 2, type: "custom_emoji", custom_emoji_id: "5042274086332400375" },
+            { offset: finalMsg.indexOf("💵") !== -1 ? finalMsg.indexOf("💵") : 30, length: 2, type: "custom_emoji", custom_emoji_id: "4956601935592424315" },
+            { offset: finalMsg.indexOf(netDisplayName) - 3, length: 2, type: "custom_emoji", custom_emoji_id: netEmojiId },
+            { offset: finalMsg.indexOf("❤️‍🔥"), length: 5, type: "custom_emoji", custom_emoji_id: "5042225965518816316" }
           ];
 
           try {
@@ -417,8 +426,8 @@ app.post("/telegram-webhook", async (req, res) => {
               body: JSON.stringify({
                 chat_id: order.userId,
                 photo: adminReceiptPhotoId,
-                caption: userMsg,
-                caption_entities: userEntities
+                caption: finalMsg,
+                caption_entities: finalEntities
               })
             });
           } catch (e) {
@@ -1118,11 +1127,9 @@ app.post("/telegram-webhook", async (req, res) => {
 
             sentEntities = [
               { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
-              { offset: 3, length: 25, type: "bold" },
               { offset: sentText.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
-              { offset: sentText.indexOf(amtPart), length: amtPart.length, type: "bold" },
               { offset: sentText.indexOf("🖥"), length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: sentText.indexOf(walletAddress), length: walletAddress.length, type: "code" },
+              { offset: sentText.indexOf(walletAddress), length: walletAddress.length, type: "phone_number" },
               { offset: sentText.indexOf("💸"), length: 2, type: "custom_emoji", custom_emoji_id: "5965273136747257327" },
               { offset: sentText.indexOf("👨‍💻"), length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
             ];
@@ -1135,11 +1142,8 @@ app.post("/telegram-webhook", async (req, res) => {
 
             sentEntities = [
               { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "4956721670690702265" },
-              { offset: 3, length: 25, type: "bold" },
               { offset: sentText.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "4956601935592424315" },
-              { offset: sentText.indexOf(amtPart), length: amtPart.length, type: "bold" },
               { offset: sentText.indexOf("🖥"), length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: sentText.indexOf(walletAddress), length: walletAddress.length, type: "code" },
               { offset: sentText.indexOf("🤑"), length: 2, type: "custom_emoji", custom_emoji_id: "5350716797622442220" },
               { offset: sentText.indexOf("👨‍💻"), length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
             ];
@@ -1152,11 +1156,8 @@ app.post("/telegram-webhook", async (req, res) => {
 
             sentEntities = [
               { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "4956721670690702265" },
-              { offset: 3, length: 25, type: "bold" },
               { offset: sentText.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "4956601935592424315" },
-              { offset: sentText.indexOf(amtPart), length: amtPart.length, type: "bold" },
               { offset: sentText.indexOf("🖥"), length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: sentText.indexOf(walletAddress), length: walletAddress.length, type: "code" },
               { offset: sentText.indexOf("🔶"), length: 2, type: "custom_emoji", custom_emoji_id: "5291786530606562380" },
               { offset: sentText.indexOf("👨‍💻"), length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
             ];
@@ -1169,13 +1170,9 @@ app.post("/telegram-webhook", async (req, res) => {
 
             sentEntities = [
               { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
-              { offset: 3, length: 25, type: "bold" },
               { offset: sentText.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
-              { offset: sentText.indexOf(amtPart), length: amtPart.length, type: "bold" },
               { offset: sentText.indexOf("🖥"), length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-              { offset: sentText.indexOf(walletAddress), length: walletAddress.length, type: "code" },
-              { offset: sentText.indexOf("😟"), length: 2, type: "custom_emoji", custom_emoji_id: "5327975761833913214" },
-              { offset: sentText.indexOf("👨‍💻"), length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" }
+              { offset: sentText.indexOf("😟"), length: 2, type: "custom_emoji", custom_emoji_id: "5327975761833913214" }
             ];
           }
 
@@ -1898,10 +1895,8 @@ app.post("/telegram-webhook", async (req, res) => {
               text: `📌 እባክዎ የ Binance💰 ID ቁጥርዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ 1197432698`,
               entities: [
                 { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5397782960512444700" },
-                { offset: 3, length: 28, type: "bold" },
                 { offset: 17, length: 2, type: "custom_emoji", custom_emoji_id: "5202068941580550229" },
-                { offset: 37, length: 2, type: "custom_emoji", custom_emoji_id: "5443038326535759644" },
-                { offset: 40, length: 16, type: "italic" }
+                { offset: 37, length: 2, type: "custom_emoji", custom_emoji_id: "5443038326535759644" }
               ]
             },
             bep20: {
@@ -1909,10 +1904,8 @@ app.post("/telegram-webhook", async (req, res) => {
               text: `📌 እባክዎ የ USDT BEP-20🔶 አድራሻዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ 0x71C83920F...`,
               entities: [
                 { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5397782960512444700" },
-                { offset: 3, length: 32, type: "bold" },
                 { offset: 21, length: 2, type: "custom_emoji", custom_emoji_id: "5291786530606562380" },
-                { offset: 39, length: 2, type: "custom_emoji", custom_emoji_id: "5443038326535759644" },
-                { offset: 42, length: 20, type: "italic" }
+                { offset: 39, length: 2, type: "custom_emoji", custom_emoji_id: "5443038326535759644" }
               ]
             },
             ton: {
@@ -1920,10 +1913,8 @@ app.post("/telegram-webhook", async (req, res) => {
               text: `📌 እባክዎ የ TON🤑 Wallet አድራሻዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ UQCYZuyq...`,
               entities: [
                 { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5397782960512444700" },
-                { offset: 3, length: 31, type: "bold" },
                 { offset: 13, length: 2, type: "custom_emoji", custom_emoji_id: "5350716797622442220" },
-                { offset: 38, length: 2, type: "custom_emoji", custom_emoji_id: "5443038326535759644" },
-                { offset: 41, length: 17, type: "italic" }
+                { offset: 38, length: 2, type: "custom_emoji", custom_emoji_id: "5443038326535759644" }
               ]
             },
             aptos: {
@@ -1931,10 +1922,8 @@ app.post("/telegram-webhook", async (req, res) => {
               text: `📌እባክዎ የ Aptos😟 Wallet አድራሻዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ ox71hcj....`,
               entities: [
                 { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5397782960512444700" },
-                { offset: 2, length: 33, type: "bold" },
                 { offset: 14, length: 2, type: "custom_emoji", custom_emoji_id: "5327975761833913214" },
-                { offset: 39, length: 2, type: "custom_emoji", custom_emoji_id: "5443038326535759644" },
-                { offset: 42, length: 17, type: "italic" }
+                { offset: 39, length: 2, type: "custom_emoji", custom_emoji_id: "5443038326535759644" }
               ]
             }
           };
@@ -2131,29 +2120,55 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-        if (action === "quick_approve") {
+        if (action === "quick_approve" || action === "buy_allow") {
           order.status = "approved";
           await order.save();
 
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
-          const bankEmojiId = order.method === "CBE" ? "5805572156599312646" : "5931638668031695373";
-          const amountStr = `${order.amount} USDT`;
-          const totalStr = `${Number(order.total || 0).toLocaleString()} ETB`;
+          const netKey = order.networkKey || "binance";
+          let netEmojiId = "5296437653770608702"; // 💰 Binance
+          let netDisplayName = "Binance ID";
 
-          const quickMsg =
-            `የ${amountStr}💵 ሽያጭ ትዕዛዝዎ ጸድቋል!✅\n\n` +
-            ` 🍾${totalStr} ወደ ${order.method}🏦 አካውንትዎ ገቢ ተደርጓል።\n\n` +
-            ` ከUnique P2P ጋር ስለሰሩ እናመሰግናለን❤️‍🔥!`;
+          if (netKey === "bep20") {
+            netEmojiId = "5291786530606562380";
+            netDisplayName = "Bep-20";
+          } else if (netKey === "ton") {
+            netEmojiId = "5350716797622442220";
+            netDisplayName = "TON";
+          } else if (netKey === "aptos") {
+            netEmojiId = "5327975761833913214";
+            netDisplayName = "Aptos";
+          }
 
-          const quickEntities = [
-            { offset: quickMsg.indexOf(amountStr), length: amountStr.length, type: "bold" },
-            { offset: quickMsg.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5965043124068687455" },
-            { offset: quickMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
-            { offset: quickMsg.indexOf("🍾"), length: 2, type: "custom_emoji", custom_emoji_id: "5042274086332400375" },
-            { offset: quickMsg.indexOf(totalStr), length: totalStr.length, type: "bold" },
-            { offset: quickMsg.indexOf("🏦"), length: 2, type: "custom_emoji", custom_emoji_id: bankEmojiId },
-            { offset: quickMsg.indexOf("❤️‍🔥"), length: 5, type: "custom_emoji", custom_emoji_id: "5042225965518816316" }
+          const approvedText =
+            `✔️ ትዕዛዝዎ ተፈቅዷል፤ ክፍያ መፈጸም ይችላሉ!\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `💵 የሚገዙት መጠን፦ ${order.amount} USDT\n` +
+            `💰 የሚከፍሉት ጠቅላላ ብር፦ ${Number(order.total || 0).toLocaleString()} ETB\n` +
+            `🖥 መቀበያዎ፦ ${order.account} (${netEmojiId === "5296437653770608702" ? "💰" : netEmojiId === "5291786530606562380" ? "🔶" : netEmojiId === "5350716797622442220" ? "🤑" : "😟"}${netDisplayName})\n\n` +
+            `⬇️ እባክዎ ትክክለኛውን ብር ከታች ባሉት አማራጮች ገቢ ያድርጉ፡-\n\n` +
+            `🏦 Telebirr፦ 0949241461\n` +
+            `👤 ስም፦ Bereket\n\n` +
+            `🏦 CBE ንግድ ባንክ፦ 1000725377421\n` +
+            `👤 ስም፦ Bereket Wondimhun\n\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🗓 ክፍያውን እንደፈጸሙ የከፈሉበትን ደረሰኝ (Screenshot) ከስር ይላኩ፡-`;
+
+          const approvedEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5039844895779455925" },
+            { offset: 56, length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
+            { offset: 78, length: 2, type: "custom_emoji", custom_emoji_id: "5039789890133296083" },
+            { offset: 106, length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
+            { offset: 116, length: order.account.length, type: "phone_number" },
+            { offset: 127, length: 2, type: "custom_emoji", custom_emoji_id: netEmojiId },
+            { offset: 142, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+            { offset: 186, length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
+            { offset: 199, length: 10, type: "phone_number" },
+            { offset: 210, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 226, length: 2, type: "custom_emoji", custom_emoji_id: "5796351978506298393" },
+            { offset: 256, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 307, length: 2, type: "custom_emoji", custom_emoji_id: "5274055917766202507" }
           ];
 
           await telegram("sendMessage", {
@@ -2161,8 +2176,8 @@ app.post("/telegram-webhook", async (req, res) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               chat_id: order.userId,
-              text: quickMsg,
-              entities: quickEntities
+              text: approvedText,
+              entities: approvedEntities
             })
           });
 
@@ -2170,17 +2185,17 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-        if (action === "decline") {
+        if (action === "decline" || action === "buy_reject") {
           order.status = "declined";
           await order.save();
 
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
-          const declineMsg = `❌ ትዕዛዝዎ ውድቅ ተደርጓል። ለጥያቄ @Aropc ያነጋግሩ🙂።`;
+          const declineMsg = `❌ ይቅርታ ትዕዛዝዎ ውድቅ ተደርጓል። ለጥያቄ @Aropc ያነጋግሩ✅️።`;
           const declineEntities = [
             { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "5040042498634810056" },
-            { offset: 2, length: 21, type: "bold" },
-            { offset: 36, length: 2, type: "custom_emoji", custom_emoji_id: "5039613856603702817" }
+            { offset: 29, length: 6, type: "mention" },
+            { offset: 41, length: 2, type: "custom_emoji", custom_emoji_id: "5870844977914842593" }
           ];
 
           await telegram("sendMessage", {
