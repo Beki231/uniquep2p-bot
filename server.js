@@ -2252,3 +2252,18 @@ app.post("/telegram-webhook", async (req, res) => {
           await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "❌ Declined!" }) });
           return;
         }
+      }
+    }
+  } catch (err) {
+    console.error("Webhook processing error:", err.message);
+  }
+});
+
+process.on("unhandledRejection", err => console.error("Unhandled Rejection:", err.message));
+process.on("uncaughtException", err => console.error("Uncaught Exception:", err.message));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Normal Bot running on port ${PORT}`);
+});
+
