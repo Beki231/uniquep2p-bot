@@ -2121,21 +2121,8 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-                        let action = "unknown";
-        let orderId = "";
-        
-        if (callback && callback.data) {
-          const dataParts = callback.data.split(":");
-          action = dataParts[0] || "unknown";
-          orderId = dataParts[1] || "";
-        }
-
-        let order = await Order.findOne({ orderId: orderId });
-        if (!order && callback?.message?.message_id) {
-          order = await Order.findOne({ adminMessageId: callback.message.message_id });
-        }
-
-
+        const [action, orderId] = callbackData && callbackData.includes(":") ? callbackData.split(":") : ["", ""];
+        const order = await Order.findOne({ orderId });
         if (!order || (order.status !== "pending" && order.status !== "awaiting_permission")) {
           await clearAdminOrderButtons(callback.message?.message_id);
           await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "ይህ ትዕዛዝ ቀድሞ ተጠናቋል!" }) });
