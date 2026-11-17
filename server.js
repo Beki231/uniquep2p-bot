@@ -2121,18 +2121,20 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-                let action = "";
+                        let action = "unknown";
         let orderId = "";
-        if (callbackData) {
-          const parts = callbackData.split(":");
-          action = parts[0] || "";
-          orderId = parts[1] || "";
+        
+        if (callback && callback.data) {
+          const dataParts = callback.data.split(":");
+          action = dataParts[0] || "unknown";
+          orderId = dataParts[1] || "";
         }
 
-        let order = await Order.findOne({ orderId });
-        if (!order) {
-          order = await Order.findOne({ adminMessageId: callback.message?.message_id });
+        let order = await Order.findOne({ orderId: orderId });
+        if (!order && callback?.message?.message_id) {
+          order = await Order.findOne({ adminMessageId: callback.message.message_id });
         }
+
 
         if (!order || (order.status !== "pending" && order.status !== "awaiting_permission")) {
           await clearAdminOrderButtons(callback.message?.message_id);
