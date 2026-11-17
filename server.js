@@ -1833,7 +1833,9 @@ app.post("/telegram-webhook", async (req, res) => {
       }
     }
 
-    // 4. Callback Query Handlers
+                          
+
+                          // 4. Callback Query Handlers
     if (callback) {
       const callbackData = callback.data || "";
       const cbUserId = callback.from.id;
@@ -1938,7 +1940,7 @@ app.post("/telegram-webhook", async (req, res) => {
             },
             aptos: {
               name: "Aptos",
-              text: `📌እባክዎ የ Aptos😟 Wallet አድራሻዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ ox71hcj....`,
+              text: `📌 እባክዎ የ Aptos😟 Wallet አድራሻዎን ያስገቡ፡-\n\n💬 ምሳሌ፦ ox71hcj....`,
               entities: [
                 { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5397782960512444700" },
                 { offset: 14, length: 2, type: "custom_emoji", custom_emoji_id: "5327975761833913214" },
@@ -1973,8 +1975,6 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-
-
       if (callbackData.startsWith("net:")) {
         const netKey = callbackData.replace("net:", "");
         const selectedNet = cryptoNetworks[netKey];
@@ -1989,12 +1989,8 @@ app.post("/telegram-webhook", async (req, res) => {
 
           const methodKeyboard = {
             inline_keyboard: [
-              [
-                { text: "ቴሌብር (Telebirr)", icon_custom_emoji_id: "5805526032945519867", callback_data: "pay:Telebirr" }
-              ],
-              [
-                { text: "ንግድ ባንክ (CBE)", icon_custom_emoji_id: "5805572156599312646", callback_data: "pay:CBE" }
-              ]
+              [{ text: "ቴሌብር (Telebirr)", icon_custom_emoji_id: "5805526032945519867", callback_data: "pay:Telebirr" }],
+              [{ text: "ንግድ ባንክ (CBE)", icon_custom_emoji_id: "5805572156599312646", callback_data: "pay:CBE" }]
             ]
           };
 
@@ -2053,7 +2049,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-        if (String(cbUserId) === ADMIN_CHAT_ID) {
+      if (String(cbUserId) === ADMIN_CHAT_ID) {
         if (callbackData === "open_admin_panel") {
           await telegram("answerCallbackQuery", {
             method: "POST",
@@ -2100,11 +2096,6 @@ app.post("/telegram-webhook", async (req, res) => {
         const action = parts[0] || "";
         const orderId = parts[1] || "";
 
-        // 💡 1. አድሚን ያልሆኑ ሌሎች ኮልባኮች (check_join, buynet, ወዘተ) ወደዚህ እንዳገረሹ በደህና እንዲያልፉ ማድረግ
-        if (!action || callbackData === "check_join" || callbackData.startsWith("buynet:") || callbackData.startsWith("net:") || callbackData.startsWith("pay:")) {
-          return;
-        }
-
         if (callback && callback.id) {
           try {
             await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "Processing..." }) });
@@ -2133,7 +2124,6 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-        // 🟢 2. APPROVE / BUY ALLOW (ያለ ምንም ፕሪሚየም ኢሞጂ በንጹህ ጽሁፍ)
         if (action === "quick_approve" || action === "buy_allow") {
           order.status = "approved";
           const buyingUser = await User.findOne({ telegramId: order.userId });
@@ -2186,7 +2176,6 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-        // 🔴 3. DECLINE / BUY REJECT (በከፍተኛ ጥራት ባላቸው Custom Emojis የተዋበ)
         if (action === "decline" || action === "buy_reject") {
           order.status = "declined";
           await order.save();
@@ -2223,8 +2212,8 @@ app.post("/telegram-webhook", async (req, res) => {
             })
           });
 
-          await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "❌ Declined!" }) });
-          return;
+       await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "❌ Declined!" }) });
+        return;
         }
        }
       }
