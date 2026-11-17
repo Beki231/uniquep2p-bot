@@ -388,32 +388,28 @@ app.post("/telegram-webhook", async (req, res) => {
           await clearAdminOrderButtons(order.adminMessageId);
 
           const netKey = order.networkKey || "binance";
-          let netEmojiId = "5296437653770608702"; 
           let netDisplayName = "Binance ID";
-
-          if (netKey === "bep20") {
-            netEmojiId = "5291786530606562380";
-            netDisplayName = "BEP-20";
-          } else if (netKey === "ton") {
-            netEmojiId = "5350716797622442220";
-            netDisplayName = "TON";
-          } else if (netKey === "aptos") {
-            netEmojiId = "5327975761833913214";
-            netDisplayName = "Aptos";
-          }
+          if (netKey === "bep20") netDisplayName = "BEP-20";
+          else if (netKey === "ton") netDisplayName = "TON";
+          else if (netKey === "aptos") netDisplayName = "Aptos";
 
           const amountStr = `${order.amount} USDT`;
-          const isTele = order.method === "Telebirr";
-          const bankName = isTele ? "Telebirr" : "ንግድ ባንክ";
-          const bankEmoji = isTele ? "5931638668031695373" : "5931351583827696128";
-
           const finalMsg =
-            `🎉 ትዕዛዝዎ በተሳካ ሁኔታ ደርሷል✅\n` +
-            `━━━━━━━━━━━━━━━━━━\n\n` +
-            `💵 መጠን: ${order.amount} USDT\n` +
-            `💰 የሚከፈለው: ${Number(order.total || 0).toLocaleString()} ETB\n` +
-            `🖥 ወደ: ${bankName}🏦 (${order.account})\n\n` +
-            `አድሚኑ ደረሰኙን አረጋግጦ ክፍያውን ወዲያውኑ ገቢ ያደርጋል✅!`;
+            `✔️ የትዕዛዝ ማረጋገጫ እና ደረሰኝ፦\n\n` +
+            `የ${amountStr} ግዥ ትዕዛዝዎ ጸድቋል!✅\n\n` +
+            ` 🍾 ${order.amount}$  ወደ ${netDisplayName} አካውንትዎ ገቢ ተደርጓል።\n\n` +
+            ` ከUnique P2P ጋር ስለሰሩ እናመሰግናለን❤️‍🔥!`;
+
+          const finalEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "6267225207560214192" },
+            { offset: finalMsg.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5965043124068687455" },
+            { offset: finalMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
+            { offset: finalMsg.indexOf("🍾"), length: 2, type: "custom_emoji", custom_emoji_id: "5042274086332400375" },
+            { offset: finalMsg.lastIndexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "4956601935592424315" },
+            { offset: finalMsg.indexOf(netDisplayName), length: netDisplayName.length, type: "bold" },
+            { offset: finalMsg.indexOf("💰"), length: 2, type: "custom_emoji", custom_emoji_id: "5296437653770608702" },
+            { offset: finalMsg.indexOf("❤️‍🔥"), length: 5, type: "custom_emoji", custom_emoji_id: "5042225965518816316" }
+          ];
 
           try {
             await telegram("sendPhoto", {
@@ -422,7 +418,8 @@ app.post("/telegram-webhook", async (req, res) => {
               body: JSON.stringify({
                 chat_id: order.userId,
                 photo: adminReceiptPhotoId,
-                caption: finalMsg
+                caption: finalMsg,
+                caption_entities: finalEntities
               })
             });
           } catch (e) {
@@ -1795,12 +1792,22 @@ app.post("/telegram-webhook", async (req, res) => {
           user.tempOrder = {};
           await user.save();
 
-          const orderSuccessText = `🛫 ትዕዛዝዎ እና የከፈሉበት ደረሰኝ በተሳካ ሁኔታ ደርሶናል!\n\n👨‍💻 መረጃዎ ወደ Admin ተልኳል፤ በጥቂት ደቂቃዎች ውስጥ ተጣርቶ ይላክሎታል።\n\n💯 UNIQUE P2P STOREን ስለመረጡ እናመሰግናለን!`;
-          const orderSuccessEntities = [
-            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5201691993775818138" },
-            { offset: 41, length: 5, type: "custom_emoji", custom_emoji_id: "5190498849440931467" },
-            { offset: 96, length: 2, type: "custom_emoji", custom_emoji_id: "5042297717242463211" }
-          ];
+          const isTele = orderData.method === "Telebirr";
+          const bankName = isTele ? "Telebirr" : "CBE";
+          const bankEmoji = isTele ? "5931638668031695373" : "5931351583827696128";
+          const checkEmoji = "5039529134078821602";
+          const usdtEmoji = "4956601935592424315";
+          const etbEmoji = "4958926882994127612";
+          const bankIconEmoji = "5282843764451195532";
+          const okEmoji = "6266967801580231067";
+
+          const orderSuccessText =
+            `<tg-emoji emoji-id="${checkEmoji}">🎉</tg-emoji> <b>ትዕዛዝዎ በተሳካ ሁኔታ ደርሷል</b><tg-emoji emoji-id="${okEmoji}">✅</tg-emoji>\n` +
+            `━━━━━━━━━━━━━━━━━━\n\n` +
+            `<tg-emoji emoji-id="${usdtEmoji}">💵</tg-emoji> <b>መጠን:</b> ${orderData.amount} USDT\n` +
+            `<tg-emoji emoji-id="${etbEmoji}">💰</tg-emoji> <b>የሚከፈለው:</b> ${Number(orderData.total || 0).toLocaleString()} ETB\n` +
+            `<tg-emoji emoji-id="${bankIconEmoji}">🖥</tg-emoji> <b>ወደ:</b> ${bankName}<tg-emoji emoji-id="${bankEmoji}">🏦</tg-emoji> (<code>${orderData.account}</code>)\n\n` +
+            `አድሚኑ ደረሰኙን አረጋግጦ ክፍያውን ወዲያውኑ ገቢ ያደርጋል<tg-emoji emoji-id="${okEmoji}">✅</tg-emoji>!`;
 
           await telegram("sendMessage", {
             method: "POST",
@@ -1808,7 +1815,7 @@ app.post("/telegram-webhook", async (req, res) => {
             body: JSON.stringify({
               chat_id: userId,
               text: orderSuccessText,
-              entities: orderSuccessEntities,
+              parse_mode: "HTML",
               reply_markup: {
                 keyboard: [[{ text: "❌ ሰርዝ (Cancel)" }]],
                 resize_keyboard: true
@@ -2189,20 +2196,20 @@ app.post("/telegram-webhook", async (req, res) => {
           else if (netKey === "ton") netDisplayName = "TON";
           else if (netKey === "aptos") netDisplayName = "Aptos";
 
-          // 💡 የኢንቲቲ ስሌት ስህተት እንዳይፈጠር እና የጠየቅካቸው Bold እና Mono (Code) በሰላም እንዲሰሩ በኤችቲኤምኤል ታጎች የተዋበ መልእክት
+          // 💡 ተለዋዋጭ የርዝመት ስህተትን ለማስቀረት Telegram HTML `<tg-emoji>` ታግ (Tag) በመጠቀም የተሰራ ንጹህ መልእክት
           const approvedText =
-            `✔️ <b>ትዕዛዝዎ ተፈቅዷል፤ ክፍያ መፈጸም ይችላሉ!</b>\n` +
+            `<tg-emoji emoji-id="6267225207560214192">✔️</tg-emoji> <b>ትዕዛዝዎ ተፈቅዷል፤ ክፍያ መፈጸም ይችላሉ!</b>\n` +
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-            `💵 <b>የሚገዙት መጠን፦</b> <b>${order.amount} USDT</b>\n` +
-            `💰 <b>የሚከፍሉት ጠቅላላ ብር፦</b> <b>${Number(order.total || 0).toLocaleString()} ETB</b>\n` +
-            `🖥 <b>መቀበያዎ፦</b> <code>${escapeHTML(order.account)}</code> (${netDisplayName})\n\n` +
-            `⬇️ <b>እባክዎ ትክክለኛውን ብር ከታች ባሉት አማራጮች ገቢ ያድርጉ፡-</b>\n\n` +
-            `🏦 <b>Telebirr፦</b> <code>0949241461</code>\n` +
-            `👤 <b>ስም፦</b> Bereket\n\n` +
-            `🏦 <b>CBE ንግድ ባንክ፦</b> <code>1000725377421</code>\n` +
-            `👤 <b>ስም፦</b> Bereket Wondimhun\n\n` +
+            `<tg-emoji emoji-id="5965043124068687455">💵</tg-emoji> <b>የሚገዙት መጠን፦</b> <b>${order.amount} USDT</b>\n` +
+            `<tg-emoji emoji-id="6267068789146260253">💰</tg-emoji> <b>የሚከፍሉት ጠቅላላ ብር፦</b> <b>${Number(order.total || 0).toLocaleString()} ETB</b>\n` +
+            `<tg-emoji emoji-id="4956324463525233747">🖥</tg-emoji> <b>መቀበያዎ፦</b> <code>${escapeHTML(order.account)}</code> (${netDisplayName})\n\n` +
+            `<tg-emoji emoji-id="5406745015365943482">⬇️</tg-emoji> <b>እባክዎ ትክክለኛውን ብር ከታች ባሉት አማራጮች ገቢ ያድርጉ፡-</b>\n\n` +
+            `<tg-emoji emoji-id="5796159851734244538">🏦</tg-emoji> <b>Telebirr፦</b> <code>0949241461</code>\n` +
+            `<tg-emoji emoji-id="5373012449597335010">👤</tg-emoji> <b>ስም፦</b> Bereket\n\n` +
+            `<tg-emoji emoji-id="5796351978506298393">🏦</tg-emoji> <b>CBE ንግድ ባንክ፦</b> <code>1000725377421</code>\n` +
+            `<tg-emoji emoji-id="5373012449597335010">👤</tg-emoji> <b>ስም፦</b> Bereket Wondimhun\n\n` +
             `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-            `🗓 <b>ክፍያውን እንደፈጸሙ የከፈሉበትን ደረሰኝ (Screenshot) ከስር ይላኩ፡-</b>`;
+            `<tg-emoji emoji-id="5413879192267805083">🗓</tg-emoji> <b>ክፍያውን እንደፈጸሙ የከፈሉበትን ደረሰኝ (Screenshot) ከስር ይላኩ፡-</b>`;
 
           try {
             await telegram("sendMessage", {
