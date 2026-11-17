@@ -2140,7 +2140,9 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-          const [action, orderId] = callbackData.split(":");
+        const callbackData = callback.data || "";
+        const [action, orderId] = callbackData.includes(":") ? callbackData.split(":") : [callbackData, ""];
+        
         let order = await Order.findOne({ orderId });
         if (!order) {
           order = await Order.findOne({ adminMessageId: callback.message?.message_id });
