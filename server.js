@@ -2140,7 +2140,19 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-         if (action.includes("approve") || action.includes("allow") || action.startsWith("buy_allow") || action.startsWith("quick_approve")) {
+          const [action, orderId] = callbackData.split(":");
+        let order = await Order.findOne({ orderId });
+        if (!order) {
+          order = await Order.findOne({ adminMessageId: callback.message?.message_id });
+        }
+
+        if (!order || (order.status !== "pending" && order.status !== "awaiting_permission")) {
+          await clearAdminOrderButtons(callback.message?.message_id);
+          await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "ይህ ትዕዛዝ ቀድሞ ተጠናቋል ወይም አልተገኘም!" }) });
+          return;
+        }
+
+        if (action.includes("approve") || action.includes("allow") || action.startsWith("buy_allow") || action.startsWith("quick_approve")) {
           order.status = "approved";
           const buyingUser = await User.findOne({ telegramId: order.userId });
           if (buyingUser) {
@@ -2266,4 +2278,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Normal Bot running on port ${PORT}`);
 });
-
