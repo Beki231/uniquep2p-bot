@@ -980,7 +980,7 @@ app.post("/telegram-webhook", async (req, res) => {
         const buyIntroText =
           `↗️ የዛሬ የ USDT መግዣ ተመን (Rate)\n\n` +
           `💵 ${buyRateStr}\n\n` +
-          `🌟ለመግዛት ከተስማሙ «ተስማምቻለሁ» የሚለውን ይንኩ👇`;
+          `🌟ለመግዛት ከተስማሙ «✅ ተስማምቻለሁ» የሚለውን ይንኩ👇`;
 
         const buyIntroEntities = [
           { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "5429651785352501917" },
@@ -988,6 +988,7 @@ app.post("/telegram-webhook", async (req, res) => {
           { offset: buyIntroText.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
           { offset: buyIntroText.indexOf(buyRateStr), length: buyRateStr.length, type: "bold" },
           { offset: buyIntroText.indexOf("🌟"), length: 2, type: "custom_emoji", custom_emoji_id: "6267118537752450044" },
+          { offset: buyIntroText.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
           { offset: buyIntroText.indexOf("ተስማምቻለሁ"), length: 10, type: "bold" },
           { offset: buyIntroText.indexOf("👇"), length: 2, type: "custom_emoji", custom_emoji_id: "5231102735817918643" }
         ];
@@ -1001,7 +1002,7 @@ app.post("/telegram-webhook", async (req, res) => {
             entities: buyIntroEntities,
             reply_markup: {
               keyboard: [
-                [{ text: "ተስማምቻለሁ" }],
+                [{ text: "✅ ተስማምቻለሁ" }],
                 [{ text: "❌ ሰርዝ (Cancel)" }]
               ],
               resize_keyboard: true
@@ -1011,7 +1012,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-      if ((text === "ተስማምቻለሁ" || text === "ተስማምቻለሁ✔️" || text === "✅ ተስማምቻለሁ") && user.step === "awaiting_buy_agree") {
+      if ((text === "✅ ተስማምቻለሁ" || text === "ተስማምቻለሁ" || text === "ተስማምቻለሁ✔️") && user.step === "awaiting_buy_agree") {
         user.step = "awaiting_buy_amount";
         user.tempOrder = {};
         await user.save();
@@ -1106,7 +1107,7 @@ app.post("/telegram-webhook", async (req, res) => {
       }
 
       if (user.step === "awaiting_buy_address") {
-        const walletAddress = text.trim(); // ምንም ቼክ (Validation) የለውም፣ የጻፈውን በነፃነት ይቀበላል
+        const walletAddress = text.trim(); // ምንም ቼክ የለውም
 
         const orderId = `ORD-${Date.now()}`;
         const orderData = user.tempOrder || {};
@@ -1131,7 +1132,7 @@ app.post("/telegram-webhook", async (req, res) => {
           });
 
           user.step = "awaiting_permission";
-          user.tempOrder = {};
+          user.tempOrder = { orderId, amount: orderData.amount, total: totalFixed, account: walletAddress };
           await user.save();
 
           let sentText = "";
@@ -1239,6 +1240,62 @@ app.post("/telegram-webhook", async (req, res) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ chat_id: userId, text: "⚠️ በጥያቄ ምዝገባ ወቅት ችግር አጋጥሟል። እባክዎ በ /start እንደገና ይሞክሩ።" })
           });
+        }
+        return;
+      }
+
+      // 5ኛ ቁጥር፦ ተጠቃሚው የክፍያ ደረሰኝ (Screenshot) ሲልክ ወደ አድሚን የሚልክበት ክፍል
+      if (user.step === "awaiting_buy_screenshot") {
+        if (!msg.photo || msg.photo.length === 0) {
+          await telegram("sendMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: userId, text: "⚠️ እባክዎ የከፈሉበትን ደረሰኝ በፎቶ (Screenshot) መልክ ይላኩ፦" })
+          });
+          return;
+        }
+
+        const fileId = msg.photo[msg.photo.length - 1].file_id;
+        const orderData = user.tempOrder || {};
+
+        try {
+          user.step = "pending_admin_check";
+          await user.save();
+
+          const successText = `🛫 የከፈሉበት ደረሰኝ በተሳካ ሁኔታ ለአድሚን ተልኳል!\n\n👨‍💻 እባክዎ Admin እስኪያረጋግጥ ጥቂት ደቂቃዎች ይጠብቁ።`;
+          await telegram("sendMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: userId,
+              text: successText,
+              reply_markup: {
+                keyboard: [[{ text: "❌ ሰርዝ (Cancel)" }]],
+                resize_keyboard: true
+              }
+            })
+          });
+
+          const adminProofCaption =
+            `🚨 <b>አዲስ የ USDT ግዢ የክፍያ ደረሰኝ (Screenshot)</b>\n━━━━━━━━━━━━━━━━━━\n` +
+            `👤 <b>ስም:</b> ${escapeHTML(msg.from.first_name || "ደንበኛ")} (@${msg.from.username || "የለውም"})\n` +
+            `🆔 <b>User ID:</b> <code>${userId}</code>\n` +
+            `💵 <b>USDT:</b> ${orderData.amount || 0}\n` +
+            `💰 <b>Total:</b> ${orderData.total || 0} ETB\n` +
+            `🎯 <b>መቀበያ Wallet/ID:</b> <code>${escapeHTML(orderData.account || "")}</code>\n━━━━━━━━━━━━━━━━━━`;
+
+          await telegram("sendPhoto", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: ADMIN_CHAT_ID,
+              photo: fileId,
+              caption: adminProofCaption,
+              parse_mode: "HTML"
+            })
+          });
+        } catch (err) {
+          console.error("Buy screenshot send error:", err);
         }
         return;
       }
@@ -2086,12 +2143,18 @@ app.post("/telegram-webhook", async (req, res) => {
 
         if (action === "quick_approve" || action === "buy_allow") {
           order.status = "approved";
+          const buyingUser = await User.findOne({ telegramId: order.userId });
+          if (buyingUser) {
+            buyingUser.step = "awaiting_buy_screenshot";
+            buyingUser.tempOrder = { amount: order.amount, total: order.total, account: order.account };
+            await buyingUser.save();
+          }
           await order.save();
 
           await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
           const netKey = order.networkKey || "binance";
-          let netEmojiId = "5296437653770608702"; // 💰 Binance
+          let netEmojiId = "5296437653770608702"; 
           let netDisplayName = "Binance ID";
 
           if (netKey === "bep20") {
@@ -2124,13 +2187,16 @@ app.post("/telegram-webhook", async (req, res) => {
             { offset: 56, length: 2, type: "custom_emoji", custom_emoji_id: "5040025580758631490" },
             { offset: 78, length: 2, type: "custom_emoji", custom_emoji_id: "5039789890133296083" },
             { offset: 106, length: 2, type: "custom_emoji", custom_emoji_id: "5039579582764680065" },
-            { offset: 127, length: 2, type: "custom_emoji", custom_emoji_id: netEmojiId },
-            { offset: 142, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
-            { offset: 186, length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
-            { offset: 210, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
-            { offset: 226, length: 2, type: "custom_emoji", custom_emoji_id: "5796351978506298393" },
-            { offset: 256, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
-            { offset: 307, length: 2, type: "custom_emoji", custom_emoji_id: "5274055917766202507" }
+            { offset: 116, length: order.account.length, type: "code" },
+            { offset: 128 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: netEmojiId },
+            { offset: 143 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5406745015365943482" },
+            { offset: 187 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
+            { offset: 200 + order.account.length, length: 10, type: "code" },
+            { offset: 212 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 228 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5796351978506298393" },
+            { offset: 258 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5373012449597335010" },
+            { offset: 269 + order.account.length, length: 13, type: "code" },
+            { offset: 310 + order.account.length, length: 2, type: "custom_emoji", custom_emoji_id: "5274055917766202507" }
           ];
 
           await telegram("sendMessage", {
@@ -2139,7 +2205,6 @@ app.post("/telegram-webhook", async (req, res) => {
             body: JSON.stringify({
               chat_id: order.userId,
               text: approvedText,
-              parse_mode: "HTML",
               entities: approvedEntities
             })
           });
