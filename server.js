@@ -2223,7 +2223,7 @@ app.post("/telegram-webhook", async (req, res) => {
           return;
         }
 
-        // 🔴 DECLINE / BUY REJECT (በከፍተኛ ጥራት ባላቸው Custom Emojis የተዋበ)
+                // 🔴 DECLINE / BUY REJECT (በከፍተኛ ጥራት ባላቸው Custom Emojis የተዋበ)
         if (action === "decline" || action === "buy_reject") {
           order.status = "declined";
           await order.save();
@@ -2263,17 +2263,88 @@ app.post("/telegram-webhook", async (req, res) => {
           await telegram("answerCallbackQuery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ callback_query_id: callback.id, text: "❌ Declined!" }) });
           return;
         }        
-      }
-    }
-  } catch (err) {
-    console.error("Webhook processing error:", err.message);
-  }
-});
 
-process.on("unhandledRejection", err => console.error("Unhandled Rejection:", err.message));
-process.on("uncaughtException", err => console.error("Uncaught Exception:", err.message));
+        // ================= BUY ORDER COMPLETE (BUY_DONE) =================
+        if (action === "buy_done") {
+          let order = await Order.findOne({ orderId });
+          if (!order) {
+            order = await Order.findOne({ adminMessageId: callback.message?.message_id });
+          }
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Normal Bot running on port ${PORT}`);
-});
+          if (!order) {
+            await telegram("answerCallbackQuery", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                callback_query_id: callback.id,
+                text: "⚠️ ትዕዛዙ አልተገኘም!",
+                show_alert: true
+              })
+            });
+            return;
+          }
+
+          order.status = "approved";
+          await order.save();
+
+          await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
+
+          await telegram("answerCallbackQuery", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              callback_query_id: callback.id,
+              text: "✅ Order Completed!"
+            })
+          });
+
+          const netKey = order.networkKey || "binance";
+          let netEmojiId = "5296437653770608702"; 
+          let netDisplayName = "Binance";
+
+          if (netKey === "bep20") {
+            netEmojiId = "5291786530606562380";
+            netDisplayName = "Bep-20";
+          } else if (netKey === "ton") {
+            netEmojiId = "5350716797622442220";
+            netDisplayName = "TON";
+          } else if (netKey === "aptos") {
+            netEmojiId = "5327975761833913214";
+            netDisplayName = "Aptos";
+          }
+
+          const finalMsg =
+            `✔️ የትዕዛዝ ማረጋገጫ እና ደረሰኝ፦\n\n` +
+            `የ${order.amount} USDT💵 ግዥ ትዕዛዝዎ ጸድቋል!✅\n\n` +
+            ` 🍾 ${order.amount}$💵  ወደ ${netDisplayName}💰 አካውንትዎ ገቢ ተደርጓል።\n\n` +
+            ` ከUnique P2P ጋር ስለሰሩ እናመሰግናለን❤️‍🔥!`;
+
+          const finalEntities = [
+            { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "6267225207560214192" },
+            { offset: finalMsg.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5965043124068687455" },
+            { offset: finalMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
+            { offset: finalMsg.indexOf("🍾"), length: 2, type: "custom_emoji", custom_emoji_id: "5042274086332400375" },
+            { offset: finalMsg.lastIndexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "4956601935592424315" },
+            { offset: finalMsg.indexOf(netDisplayName), length: netDisplayName.length, type: "bold" },
+            { offset: finalMsg.indexOf("💰"), length: 2, type: "custom_emoji", custom_emoji_id: netEmojiId },
+            { offset: finalMsg.indexOf("❤️‍🔥"), length: 5, type: "custom_emoji", custom_emoji_id: "5042225965518816316" }
+          ];
+
+          try {
+            await telegram("sendMessage", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: order.userId,
+                text: finalMsg,
+                entities: finalEntities,
+                reply_markup: mainMenuKeyboard
+              })
+            });
+          } catch (sendErr) {
+            console.error("Failed to send completion message to user:", sendErr.message);
+          }
+
+          return;
+        }
+
