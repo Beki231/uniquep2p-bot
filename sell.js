@@ -3,7 +3,7 @@ const {
   state, exchangeRates, getRate, escapeHTML,
   tg, answerCb, createText, clearAdminOrderButtons,
   mainMenuKeyboard, checkPaused, declineOrder
-} = require("../lib");
+} = require("./lib");
 
 // Networks (USDT receiving addresses for SELL)
 const cryptoNetworks = {
