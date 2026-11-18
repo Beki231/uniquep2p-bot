@@ -3,7 +3,7 @@ const {
   exchangeRates, escapeHTML,
   tg, answerCb, createText, clearAdminOrderButtons,
   mainMenuKeyboard, checkPaused, declineOrder
-} = require("../lib");
+} = require("./lib");
 
 function buildAddressPrompt(netKey) {
   const t = createText();
