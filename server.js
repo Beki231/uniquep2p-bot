@@ -1589,7 +1589,7 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-         if (user.step === "awaiting_screenshot") {
+          if (user.step === "awaiting_screenshot") {
         if (!msg.photo || msg.photo.length === 0) {
           await telegram("sendMessage", {
             method: "POST",
@@ -1604,8 +1604,8 @@ app.post("/telegram-webhook", async (req, res) => {
         const orderData = user.tempOrder || {};
         const method = orderData.method || "Telebirr";
         const account = orderData.account || "0987654321";
-        const amount = orderData.amount || 4;
-        const total = orderData.total || 720;
+        const amount = Number(orderData.amount) || 4;
+        const total = Number(orderData.total) || 720;
 
         try {
           const newOrder = await Order.create({
@@ -1614,8 +1614,8 @@ app.post("/telegram-webhook", async (req, res) => {
             userId: userId,
             userName: orderData.name || msg.from.first_name || "ደንበኛ",
             telegramUsername: msg.from.username || "",
-            amount: Number(amount),
-            total: Number(total),
+            amount: amount,
+            total: total,
             rate: Number(orderData.rate) || 0,
             account: account,
             method: method,
@@ -1628,7 +1628,6 @@ app.post("/telegram-webhook", async (req, res) => {
           user.tempOrder = {};
           await user.save();
 
-          // ─── የቴሌብር እና ሲቢኢ የተለዩ መልእክቶች እና Entities አቀማመጥ ───
           let successText = "";
           let successEntities = [];
 
@@ -1641,7 +1640,7 @@ app.post("/telegram-webhook", async (req, res) => {
               { offset: 59, length: 2, type: "custom_emoji", custom_emoji_id: "4958926882994127612" },
               { offset: 78, length: 2, type: "custom_emoji", custom_emoji_id: "5282843764451195532" },
               { offset: 93, length: 2, type: "custom_emoji", custom_emoji_id: "5931638668031695373" },
-              { offset: 97, length: account.length, type: "phone_number" },
+              { offset: 97, length: String(account).length, type: "phone_number" },
               { offset: successText.length - 1, length: 1, type: "custom_emoji", custom_emoji_id: "6266967801580231067" }
             ];
           } else {
@@ -1677,7 +1676,7 @@ app.post("/telegram-webhook", async (req, res) => {
             `🆔 <b>User ID:</b> <code>${userId}</code>\n` +
             `💵 <b>USDT:</b> ${amount}\n` +
             `📈 <b>Rate:</b> ${orderData.rate || 0} ETB\n` +
-            `💰 <b>Total:</b> ${(Number(total) || 0).toLocaleString()} ETB\n` +
+            `💰 <b>Total:</b> ${Number(total).toLocaleString()} ETB\n` +
             `🌐 <b>Network:</b> ${orderData.networkName || "N/A"}\n` +
             `🏦 <b>Method:</b> ${method}\n` +
             `📱 <b>Account:</b> <code>${escapeHTML(account)}</code>\n━━━━━━━━━━━━━━━━━━\n` +
