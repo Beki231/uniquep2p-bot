@@ -3,11 +3,10 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 
 const { WEBHOOK_SECRET, ADMIN_CHAT_ID, MONGO_URI, Order, initRates, answerCb, clearAdminOrderButtons } = require("./lib");
-const general = require("./flows/general");
-const admin = require("./flows/admin");
-const sell = require("./flows/sell");
-const buy = require("./flows/buy");
-
+const general = require("./general");
+const admin = require("./admin");
+const sell = require("./sell");
+const buy = require("./buy");
 const app = express();
 app.use(cors());
 app.use(express.json());
