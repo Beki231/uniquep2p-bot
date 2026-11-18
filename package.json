@@ -1,14 +1,16 @@
 {
-  "name": "uniquep2p-bot",
-  "version": "1.0.0",
-  "description": "Telegram Interactive P2P Bot",
-  "main": "server.js",
+  "name": "unique-p2p-bot",
+  "version": "2.0.0",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "mongoose": "^8.2.0"
+    "mongoose": "^8.4.0"
   }
 }
