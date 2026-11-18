@@ -1589,7 +1589,43 @@ app.post("/telegram-webhook", async (req, res) => {
         return;
       }
 
-          if (user.step === "awaiting_screenshot") {
+         if (user.step === "awaiting_name") {
+        if (text.length < 3) {
+          await telegram("sendMessage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: userId, text: "⚠️ እባክዎ ሙሉ ስም በትክክል ያስገቡ፦" })
+          });
+          return;
+        }
+
+        user.tempOrder = { ...(user.tempOrder || {}), name: text };
+        user.step = "awaiting_screenshot";
+        await user.save();
+
+        const stepTitle = "የመጨረሻ ደረጃ፦";
+        const stepSub = "(Screenshot ፎቶ)";
+        const ssPromptText = `✅${stepTitle}\n\nየላኩበትን ደረሰኝ🗓 ${stepSub} አሁን ይላኩ፦`;
+        const ssPromptEntities = [
+          { offset: 0, length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
+          { offset: ssPromptText.indexOf(stepTitle), length: stepTitle.length, type: "bold" },
+          { offset: ssPromptText.indexOf("🗓"), length: 2, type: "custom_emoji", custom_emoji_id: "4956214413578207998" },
+          { offset: ssPromptText.indexOf(stepSub), length: stepSub.length, type: "bold" }
+        ];
+
+        await telegram("sendMessage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: userId,
+            text: ssPromptText,
+            entities: ssPromptEntities
+          })
+        });
+        return;
+      }
+
+      if (user.step === "awaiting_screenshot") {
         if (!msg.photo || msg.photo.length === 0) {
           await telegram("sendMessage", {
             method: "POST",
@@ -1721,7 +1757,7 @@ app.post("/telegram-webhook", async (req, res) => {
         }
         return;
       }
-      
+
     // ==========================================
     // 4. CALLBACK QUERY HANDLERS (BUY & SELL & ADMIN)
     // ==========================================
