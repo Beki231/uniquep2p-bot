@@ -143,6 +143,38 @@ async function handleMessage(ctx) {
     return true;
   }
 
+  if (text === "🧑‍💻 ድጋፍ / አድሚን") {
+    user.step = "idle";
+    user.tempOrder = {};
+    await user.save();
+
+    const t = createText();
+    t.add("👨‍💻", "5190498849440931467");
+    t.add("የደንበኞች ድጋፍ እና ማህበረሰብ");
+    t.add("\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n");
+    t.add("➡️", "5042341817966658405");
+    t.add(" ማንኛውም ጥያቄ፣ አስተያየት ወይም እርዳታ ከፈለጉ በቀጥታ ያናግሩን፡-\n\n");
+    t.add("🤝", "6264720734820505831");
+    t.add(" Admin Support፦ ");
+    t.add("@Aropc", null, false, "mention");
+    t.add("\n");
+    t.add("✅", "6267008582294705964");
+    t.add(" Channel፦ ");
+    t.add("@Unique_techs", null, false, "mention");
+    t.add("\n\n");
+    t.add("⏰", "6285240160120477644");
+    t.add("የስራ ሰዓት፦ 24/7 ሁልጊዜ አለን!");
+    t.add("✅", "4958610528588008305");
+
+    await tg("sendMessage", {
+      chat_id: userId,
+      text: t.text,
+      entities: t.entities,
+      reply_markup: backToMainKeyboard
+    });
+    return true;
+  }
+
   return false;
 }
 
