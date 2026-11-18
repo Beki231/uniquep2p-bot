@@ -1,7 +1,7 @@
 const {
   User, exchangeRates, tg, answerCb, createText, checkMembership,
   backToMainKeyboard, mainMenuKeyboard, sendWelcome
-} = require("../lib");
+} = require("./lib");
 
 async function ensureUser(msg) {
   const userId = msg.from.id;
