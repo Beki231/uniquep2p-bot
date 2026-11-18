@@ -2,7 +2,7 @@ const {
   ADMIN_CHAT_ID, STATS_BANNER_URL,
   User, Order, Settings, Rate,
   state, exchangeRates, tg, answerCb, clearAdminOrderButtons, escapeHTML
-} = require("../lib");
+} = require("./lib");
 
 // SELL FLOW ADMIN RECEIPT (admin sends receipt photo)
 async function handleReceiptPhoto(msg) {
