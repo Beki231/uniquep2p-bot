@@ -20,20 +20,13 @@ async function handleReceiptPhoto(msg) {
 
       const isTele = order.method === "Telebirr";
       const bankName = isTele ? "Telebirr" : "CBE";
-      const bankEmoji = isTele ? "5931638668031695373" : "5931351583827696128";
-      const checkEmoji = "5039529134078821602";
-      const usdtEmoji = "4956601935592424315";
-      const etbEmoji = "4958926882994127612";
-      const bankIconEmoji = "5282843764451195532";
-      const okEmoji = "6266967801580231067";
+      const bankEmoji = isTele ? "5931638668031695373" : "5796351978506298393";
 
       const finalMsg =
-        `<tg-emoji emoji-id="${checkEmoji}">🎉</tg-emoji> <b>ትዕዛዝዎ በተሳካ ሁኔታ ደርሷል</b><tg-emoji emoji-id="${okEmoji}">✅</tg-emoji>\n` +
-        `━━━━━━━━━━━━━━━━━━\n\n` +
-        `<tg-emoji emoji-id="${usdtEmoji}">💵</tg-emoji> <b>መጠን:</b> ${order.amount} USDT\n` +
-        `<tg-emoji emoji-id="${etbEmoji}">💰</tg-emoji> <b>የሚከፈለው:</b> ${Number(order.total || 0).toLocaleString()} ETB\n` +
-        `<tg-emoji emoji-id="${bankIconEmoji}">🖥</tg-emoji> <b>ወደ:</b> ${bankName}<tg-emoji emoji-id="${bankEmoji}">🏦</tg-emoji> (<code>${escapeHTML(order.account)}</code>)\n\n` +
-        `አድሚኑ ደረሰኙን አረጋግጦ ክፍያውን ወዲያውኑ ገቢ ያደርጋል<tg-emoji emoji-id="${okEmoji}">✅</tg-emoji>!`;
+        `<tg-emoji emoji-id="5039844895779455925">✔️</tg-emoji> <b>የትዕዛዝ ማረጋገጫ እና ደረሰኝ፦</b>\n\n` +
+        `<b>የ${order.amount} USDT</b><tg-emoji emoji-id="5040025580758631490">💵</tg-emoji> <b>ሽያጭ ትዕዛዝዎ ጸድቋል!</b><tg-emoji emoji-id="6217663806110175239">✅</tg-emoji>\n\n` +
+        ` <tg-emoji emoji-id="5042274086332400375">🍾</tg-emoji><b>${Number(order.total || 0).toLocaleString()} ETB ወደ ${bankName}</b><tg-emoji emoji-id="${bankEmoji}">🏦</tg-emoji> <b>አካውንትዎ ገቢ ተደርጓል።</b>\n\n` +
+        ` <b>ከUnique P2P ጋር ስለሰሩ እናመሰግናለን</b><tg-emoji emoji-id="4956222745814762495">❤️‍🔥</tg-emoji><b>!</b>`;
 
       try {
         await tg("sendPhoto", {
