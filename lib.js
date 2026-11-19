@@ -275,7 +275,16 @@ async function declineOrder(order, callback) {
 
   await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
-  const declineMsg = `🚫 <b>ትዕዛዝዎ ውድቅ ተደርጓል!</b> ❌\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n⚠️ የላኩት መረጃ ወይም የክፍያ ደረሰኝ ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።\n\n💬 ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc`;
+  // ክፍያ ከመፈጸሙ በፊት ውድቅ ሲሆን ከደረሰኝ ውድቅ ሲሆን የተለየ ምክንያት
+  const reason = order.customerProofFileId
+    ? "የላኩት የክፍያ ደረሰኝ (Screenshot) ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።"
+    : "የላኩት መረጃ ወይም የክፍያ ደረሰኝ ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።";
+
+  const declineMsg =
+    `<tg-emoji emoji-id="5039671744172917707">🚫</tg-emoji> <b>ትዕዛዝዎ ውድቅ ተደርጓል!</b> <tg-emoji emoji-id="5040042498634810056">❌</tg-emoji>\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>${reason}</b>\n\n` +
+    `<tg-emoji emoji-id="5040036030414062506">💬</tg-emoji> <b>ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc</b>`;
 
   try {
     await tg("sendMessage", {
