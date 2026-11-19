@@ -144,10 +144,6 @@ async function handleMessage(ctx) {
   }
 
   if (text === "🧑‍💻 ድጋፍ / አድሚን") {
-    user.step = "idle";
-    user.tempOrder = {};
-    await user.save();
-
     const t = createText();
     t.add("👨‍💻", "5190498849440931467");
     t.add("የደንበኞች ድጋፍ እና ማህበረሰብ");
