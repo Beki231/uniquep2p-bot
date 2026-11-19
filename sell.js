@@ -385,32 +385,26 @@ async function handleMessage(ctx) {
       await user.save();
 
       const isTele = method === "Telebirr";
-      const t = createText();
-      t.add("🎉", "5039529134078821602");
-      t.add(" ትዕዛዝዎ በተሳካ ሁኔታ ደርሷል");
-      t.add("✅", isTele ? "4958610528588008305" : "6266967801580231067");
-      t.add("\n━━━━━━━━━━━━━━━━━━\n\n");
-      t.add("💵", isTele ? "4956601935592424315" : "5965043124068687455");
-      t.add(` መጠን: ${amount} USDT\n`);
-      t.add("💰", isTele ? "4958926882994127612" : "6267068789146260253");
-      t.add(` የሚከፈለው: ${total} ETB\n`);
-      t.add("🖥", "5282843764451195532");
-      t.add(` ወደ: ${isTele ? "Telebirr" : "CBE"}`);
-      t.add("🏦", isTele ? "5931638668031695373" : "5931351583827696128");
-      t.add(" (");
-      t.add(String(account), null, false, isTele ? "phone_number" : null);
-      t.add(")\n\nአድሚኑ ደረሰኙን አረጋግጦ ክፍያውን ወዲያውኑ ገቢ ያደርጋል");
-      t.add("✅", "6266967801580231067");
-      t.add("!");
+      const bankName = isTele ? "Telebirr" : "CBE";
+      const checkEmoji = isTele ? "4958610528588008305" : "6266967801580231067";
+      const usdtEmoji = isTele ? "4956601935592424315" : "5965043124068687455";
+      const etbEmoji = isTele ? "4958926882994127612" : "6267068789146260253";
+      const bankEmoji = isTele ? "5931638668031695373" : "5931351583827696128";
 
+      const successText =
+        `<tg-emoji emoji-id="5039529134078821602">🎉</tg-emoji> <b>ትዕዛዝዎ በተሳካ ሁኔታ ደርሷል</b><tg-emoji emoji-id="${checkEmoji}">✅</tg-emoji>\n` +
+        `━━━━━━━━━━━━━━━━━━\n\n` +
+        `<tg-emoji emoji-id="${usdtEmoji}">💵</tg-emoji> <b>መጠን: ${amount} USDT</b>\n` +
+        `<tg-emoji emoji-id="${etbEmoji}">💰</tg-emoji> <b>የሚከፈለው: ${Number(total).toLocaleString()} ETB</b>\n` +
+        `<tg-emoji emoji-id="5282843764451195532">🖥</tg-emoji> <b>ወደ: ${bankName}</b><tg-emoji emoji-id="${bankEmoji}">🏦</tg-emoji> (<code>${escapeHTML(account)}</code>)\n\n` +
+        `<b>አድሚኑ ደረሰኙን አረጋግጦ ክፍያውን ወዲያውኑ ገቢ ያደርጋል</b><tg-emoji emoji-id="6266967801580231067">✅</tg-emoji><b>!</b>`;
+
+      // Cancel ይጠፋል፤ በምትኩ ዋናው ሜኑ ይመጣል
       await tg("sendMessage", {
         chat_id: userId,
-        text: t.text,
-        entities: t.entities,
-        reply_markup: {
-          keyboard: [[{ text: "❌ ሰርዝ (Cancel)" }]],
-          resize_keyboard: true
-        }
+        text: successText,
+        parse_mode: "HTML",
+        reply_markup: mainMenuKeyboard
       });
 
       const adminCaption =
@@ -563,13 +557,14 @@ async function handleAdminCallback(ctx) {
 
     await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
+    const isTele = order.method === "Telebirr";
+    const bankName = isTele ? "Telebirr" : "CBE";
+    const bankEmoji = isTele ? "5931638668031695373" : "5796351978506298393";
+
     const sellDoneMsg =
-      `🎉 <b>ትዕዛዝዎ ጸድቋል!</b> ✅\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `💵 <b>መጠን:</b> ${order.amount} USDT\n` +
-      `💰 <b>የተከፈለ ብር:</b> ${Number(order.total || 0).toLocaleString()} ETB\n` +
-      `🏦 <b>ወደ አካውንትዎ (${escapeHTML(order.method)}):</b> <code>${escapeHTML(order.account)}</code>\n\n` +
-      `ክፍያዎ በተሳካ ሁኔታ ተፈጽሟል! ከUnique P2P ጋር ስለሰሩ እናመሰግናለን❤️‍🔥!`;
+      `<b>የ${order.amount} USDT</b><tg-emoji emoji-id="5965043124068687455">💵</tg-emoji> <b>ሽያጭ ትዕዛዝዎ ጸድቋል!</b><tg-emoji emoji-id="6266967801580231067">✅</tg-emoji>\n\n` +
+      ` <tg-emoji emoji-id="5042274086332400375">🍾</tg-emoji><b>${Number(order.total || 0).toLocaleString()} ETB ወደ ${bankName}</b><tg-emoji emoji-id="${bankEmoji}">🏦</tg-emoji> <b>አካውንትዎ ገቢ ተደርጓል።</b>\n\n` +
+      ` <b>ከUnique P2P ጋር ስለሰሩ እናመሰግናለን</b><tg-emoji emoji-id="5042225965518816316">❤️‍🔥</tg-emoji><b>!</b>`;
 
     try {
       await tg("sendMessage", {
