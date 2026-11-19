@@ -7,6 +7,8 @@ const general = require("./general");
 const admin = require("./admin");
 const sell = require("./sell");
 const buy = require("./buy");
+const history = require("./history");
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -41,6 +43,7 @@ async function handleMessage(msg, isAdmin) {
   const ctx = { msg, user, text, userId: msg.from.id };
 
   if (await general.handleMessage(ctx)) return;
+  if (await history.handleMessage(ctx)) return;
   if (await buy.handleMessage(ctx)) return;
   if (await sell.handleMessage(ctx)) return;
 }
