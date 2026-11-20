@@ -49,8 +49,8 @@ async function handleMessage(ctx) {
   const { text, userId } = ctx;
   if (text !== "📜 የትዕዛዝ ታሪክ") return false;
 
-  const orders = await Order.find({ userId }).sort({ createdAt: -1 }).limit(10);
-
+ const orders = await Order.find({ userId }).sort({ createdAt: -1 }).limit(5);
+ 
   if (!orders.length) {
     const empty = createText();
     empty.add("📣", "6267129592998270736");
