@@ -5,6 +5,7 @@ const {
   mainMenuKeyboard, checkPaused, declineOrder
 } = require("./lib");
 
+// Wallet/ID prompt per network (BUY: where the customer receives USDT)
 function buildAddressPrompt(netKey) {
   const t = createText();
 
@@ -50,10 +51,13 @@ const NET_NAMES = {
   aptos: "Aptos"
 };
 
-// BUY: user text messages
+// ==========================================
+// BUY: user text messages. Returns true if handled.
+// ==========================================
 async function handleMessage(ctx) {
   const { msg, user, text, userId } = ctx;
 
+  // ---- Entry: "🟢 USDT መግዛት" ----
   if (text === "🟢 USDT መግዛት") {
     if (await checkPaused(userId)) return true;
 
@@ -94,6 +98,7 @@ async function handleMessage(ctx) {
     return true;
   }
 
+  // ---- Agree ----
   if ((text === "✅ ተስማምቻለሁ" || text === "ተስማምቻለሁ" || text === "ተስማምቻለሁ✔️") && user.step === "awaiting_buy_agree") {
     user.step = "awaiting_buy_amount";
     user.tempOrder = {};
@@ -118,6 +123,7 @@ async function handleMessage(ctx) {
     return true;
   }
 
+  // ---- Amount ----
   if (user.step === "awaiting_buy_amount") {
     const amt = parseFloat(text);
     if (isNaN(amt) || amt < 1) {
@@ -174,6 +180,7 @@ async function handleMessage(ctx) {
     return true;
   }
 
+  // ---- Wallet address / ID ----
   if (user.step === "awaiting_buy_address") {
     const walletAddress = text.trim();
 
@@ -238,6 +245,8 @@ async function handleMessage(ctx) {
         usdtEmojiId = "4956601935592424315";
         networkEmojiId = "5327975761833913214";
       }
+
+      const netTagDisplay = `${netEmoji}${netLabel}`;
 
       const sent = createText();
       sent.add("✔️", checkmarkEmojiId);
@@ -309,9 +318,14 @@ async function handleMessage(ctx) {
     return true;
   }
 
+  // ---- Payment screenshot ----
   if (user.step === "awaiting_buy_screenshot") {
     if (!msg.photo || msg.photo.length === 0) {
-      await tg("sendMessage", { chat_id: userId, text: "⚠️ እባክዎ የከፈሉበትን ደረሰኝ በፎቶ (Screenshot) መልክ ይላኩ፦" });
+      await tg("sendMessage", {
+        chat_id: userId,
+        text: "<b>⚠️ እባክዎ የከፈሉበትን ደረሰኝ በፎቶ (Screenshot) መልክ ይላኩ፦</b>",
+        parse_mode: "HTML"
+      });
       return true;
     }
 
@@ -336,11 +350,13 @@ async function handleMessage(ctx) {
 
       const s = createText();
       s.add("🛫", "5201691993775818138");
-      s.add(" ትዕዛዝዎ እና የከፈሉበት ደረሰኝ በተሳካ ሁኔታ ደርሶናል!\n\n");
+      s.add(" ትዕዛዝዎ እና የከፈሉበት ደረሰኝ በተሳካ ሁኔታ ደርሶናል!", null, true);
+      s.add("\n\n");
       s.add("👨‍💻", "5190498849440931467");
-      s.add(" መረጃዎ ወደ Admin ተልኳል፤ በጥቂት ደቂቃዎች ውስጥ ተጣርቶ ዩኤስዲቲ (USDT) ይለቀቅሎታል።\n\n");
+      s.add(" መረጃዎ ወደ Admin ተልኳል፤ በጥቂት ደቂቃዎች ውስጥ ተጣርቶ ዩኤስዲቲ (USDT) ይለቀቅሎታል።", null, true);
+      s.add("\n\n");
       s.add("💯", "5042297717242463211");
-      s.add(" UNIQUE P2P STOREን ስለመረጡ እናመሰግናለን!");
+      s.add(" UNIQUE P2P STOREን ስለመረጡ እናመሰግናለን!", null, true);
 
       await tg("sendMessage", {
         chat_id: userId,
@@ -393,7 +409,9 @@ async function handleMessage(ctx) {
   return false;
 }
 
+// ==========================================
 // BUY: user callbacks (buynet:)
+// ==========================================
 async function handleUserCallback(callback) {
   const data = callback.data || "";
   const cbUserId = callback.from.id;
@@ -422,7 +440,11 @@ async function handleUserCallback(callback) {
   }
 }
 
+// ==========================================
 // BUY: admin callbacks (buy_allow, buy_done, buy_reject)
+// ctx = { callback, action, orderId, order }
+// Returns true if handled.
+// ==========================================
 async function handleAdminCallback(ctx) {
   const { callback, action, order } = ctx;
 
@@ -436,6 +458,7 @@ async function handleAdminCallback(ctx) {
   const netKey = order.networkKey || "binance";
   const netDisplayName = NET_NAMES[netKey] || "Binance ID";
 
+  // ---- Approve: customer may pay now ----
   if (action === "buy_allow") {
     if (order.status !== "awaiting_permission") {
       await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
@@ -464,14 +487,14 @@ async function handleAdminCallback(ctx) {
     const approvedText =
       `<tg-emoji emoji-id="6267225207560214192">✔️</tg-emoji> <b>ትዕዛዝዎ ተፈቅዷል፤ ክፍያ መፈጸም ይችላሉ!</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-      `<tg-emoji emoji-id="5965043124068687455">💵</tg-emoji> <b>የሚገዙት መጠን፦</b> <b>${order.amount} USDT</b>\n` +
-      `<tg-emoji emoji-id="6267068789146260253">💰</tg-emoji> <b>የሚከፍሉት ጠቅላላ ብር፦</b> <b>${Number(order.total || 0).toLocaleString()} ETB</b>\n` +
-      `<tg-emoji emoji-id="4956324463525233747">🖥</tg-emoji> <b>መቀበያዎ፦</b> <code>${escapeHTML(order.account)}</code> (${netDisplayName})\n\n` +
+      `<tg-emoji emoji-id="5965043124068687455">💵</tg-emoji> <b>የሚገዙት መጠን፦ ${order.amount} USDT</b>\n` +
+      `<tg-emoji emoji-id="6267068789146260253">💰</tg-emoji> <b>የሚከፍሉት ጠቅላላ ብር፦ ${Number(order.total || 0).toLocaleString()} ETB</b>\n` +
+      `<tg-emoji emoji-id="4956324463525233747">🖥</tg-emoji> <b>መቀበያዎ፦</b> <code>${escapeHTML(order.account)}</code> <b>(${netDisplayName})</b>\n\n` +
       `<tg-emoji emoji-id="5406745015365943482">⬇️</tg-emoji> <b>እባክዎ ትክክለኛውን ብር ከታች ባሉት አማራጮች ገቢ ያድርጉ፡-</b>\n\n` +
       `<tg-emoji emoji-id="5796159851734244538">🏦</tg-emoji> <b>Telebirr፦</b> <code>0949241461</code>\n` +
-      `<tg-emoji emoji-id="5373012449597335010">👤</tg-emoji> <b>ስም፦</b> Bereket\n\n` +
+      `<tg-emoji emoji-id="5373012449597335010">👤</tg-emoji> <b>ስም፦ Bereket</b>\n\n` +
       `<tg-emoji emoji-id="5796351978506298393">🏦</tg-emoji> <b>CBE ንግድ ባንክ፦</b> <code>1000725377421</code>\n` +
-      `<tg-emoji emoji-id="5373012449597335010">👤</tg-emoji> <b>ስም፦</b> Bereket Wondimhun\n\n` +
+      `<tg-emoji emoji-id="5373012449597335010">👤</tg-emoji> <b>ስም፦ Bereket Wondimhun</b>\n\n` +
       `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
       `<tg-emoji emoji-id="5413879192267805083">🗓</tg-emoji> <b>ክፍያውን እንደፈጸሙ የከፈሉበትን ደረሰኝ (Screenshot) ከስር ይላኩ፡-</b>`;
 
@@ -489,6 +512,7 @@ async function handleAdminCallback(ctx) {
     return true;
   }
 
+  // ---- Complete: USDT sent ----
   if (action === "buy_done") {
     if (order.status !== "pending") {
       await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
@@ -502,28 +526,26 @@ async function handleAdminCallback(ctx) {
     await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
     await answerCb(callback.id, "✅ Order Completed!");
 
-    const finalMsg =
-      `✔️ የትዕዛዝ ማረጋገጫ እና ደረሰኝ፦\n\n` +
-      `የ${order.amount} USDT💵 ግዥ ትዕዛዝዎ ጸድቋል!✅\n\n` +
-      ` 🍾 ${order.amount}$💵  ወደ ${netDisplayName}💰 አካውንትዎ ገቢ ተደርጓል።\n\n` +
-      ` ከUnique P2P ጋር ስለሰሩ እናመሰግናለን❤️‍🔥!`;
+    const DONE_NET = {
+      binance: { label: "Binance", icon: "💰", emoji: "5296437653770608702" },
+      bep20: { label: "BEP-20", icon: "🔶", emoji: "5291786530606562380" },
+      ton: { label: "TON", icon: "🤑", emoji: "5350716797622442220" },
+      aptos: { label: "Aptos", icon: "😟", emoji: "5327975761833913214" }
+    };
+    const doneNet = DONE_NET[netKey] || DONE_NET.binance;
 
-    const finalEntities = [
-      { offset: 0, length: 2, type: "custom_emoji", custom_emoji_id: "6267225207560214192" },
-      { offset: finalMsg.indexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "5965043124068687455" },
-      { offset: finalMsg.indexOf("✅"), length: 1, type: "custom_emoji", custom_emoji_id: "6267008582294705964" },
-      { offset: finalMsg.indexOf("🍾"), length: 2, type: "custom_emoji", custom_emoji_id: "5042274086332400375" },
-      { offset: finalMsg.lastIndexOf("💵"), length: 2, type: "custom_emoji", custom_emoji_id: "4956601935592424315" },
-      { offset: finalMsg.indexOf(netDisplayName), length: netDisplayName.length, type: "bold" },
-      { offset: finalMsg.indexOf("💰"), length: 2, type: "custom_emoji", custom_emoji_id: "5296437653770608702" },
-      { offset: finalMsg.indexOf("❤️‍🔥"), length: 5, type: "custom_emoji", custom_emoji_id: "5042225965518816316" }
-    ];
+    const finalMsg =
+      `<tg-emoji emoji-id="6267117038808870117">🎉</tg-emoji><b>ትዕዛዝዎ ጸድቋል</b><tg-emoji emoji-id="6267225207560214192">✔️</tg-emoji>\n` +
+      `━━━━━━━━━━━━━━━━━━\n\n` +
+      `<b>የ${order.amount} USDT</b><tg-emoji emoji-id="5965043124068687455">💵</tg-emoji> <b>ግዥ ትዕዛዝዎ ጸድቋል!</b><tg-emoji emoji-id="6267008582294705964">✅</tg-emoji>\n\n` +
+      ` <tg-emoji emoji-id="5042274086332400375">🍾</tg-emoji> <b>${order.amount}$</b><tg-emoji emoji-id="4956601935592424315">💵</tg-emoji>  <b>ወደ ${doneNet.label}</b><tg-emoji emoji-id="${doneNet.emoji}">${doneNet.icon}</tg-emoji> <b>አካውንትዎ ገቢ ተደርጓል።</b>\n\n` +
+      ` <b>ከUnique P2P ጋር ስለሰሩ እናመሰግናለን</b><tg-emoji emoji-id="5042225965518816316">❤️‍🔥</tg-emoji><b>!</b>`;
 
     try {
       await tg("sendMessage", {
         chat_id: order.userId,
         text: finalMsg,
-        entities: finalEntities,
+        parse_mode: "HTML",
         reply_markup: mainMenuKeyboard
       });
     } catch (sendErr) {
@@ -533,6 +555,7 @@ async function handleAdminCallback(ctx) {
     return true;
   }
 
+  // ---- Reject ----
   if (action === "buy_reject") {
     await declineOrder(order, callback);
     return true;
