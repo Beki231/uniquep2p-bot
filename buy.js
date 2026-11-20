@@ -353,7 +353,7 @@ async function handleMessage(ctx) {
       s.add(" ትዕዛዝዎ እና የከፈሉበት ደረሰኝ በተሳካ ሁኔታ ደርሶናል!", null, true);
       s.add("\n\n");
       s.add("👨‍💻", "5190498849440931467");
-      s.add(" መረጃዎ ወደ Admin ተልኳል፤ በጥቂት ደቂቃዎች ውስጥ ተጣርቶ ዩኤስዲቲ (USDT) ይለቀቅሎታል።", null, true);
+      s.add(" መረጃዎ ወደ Admin ተልኳል፤ በጥቂት ደቂቃዎች ውስጥ ተጣርቶ ይላክሎታል።", null, true);
       s.add("\n\n");
       s.add("💯", "5042297717242463211");
       s.add(" UNIQUE P2P STOREን ስለመረጡ እናመሰግናለን!", null, true);
