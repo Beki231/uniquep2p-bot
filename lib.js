@@ -266,6 +266,9 @@ async function checkPaused(userId) {
 
 // Shared decline (sell "decline" and buy "buy_reject")
 async function declineOrder(order, callback) {
+  // Buy request rejected before any payment details were sent (no screenshot yet)
+  const buyBeforePayment = order.orderType === "buy" && !order.customerProofFileId;
+
   order.status = "declined";
   await order.save();
 
@@ -275,16 +278,18 @@ async function declineOrder(order, callback) {
 
   await clearAdminOrderButtons(callback.message?.message_id || order.adminMessageId);
 
-  // ክፍያ ከመፈጸሙ በፊት ውድቅ ሲሆን ከደረሰኝ ውድቅ ሲሆን የተለየ ምክንያት
-  const reason = order.customerProofFileId
-    ? "የላኩት የክፍያ ደረሰኝ (Screenshot) ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።"
-    : "የላኩት መረጃ ወይም የክፍያ ደረሰኝ ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።";
-
-  const declineMsg =
-    `<tg-emoji emoji-id="5039671744172917707">🚫</tg-emoji> <b>ትዕዛዝዎ ውድቅ ተደርጓል!</b> <tg-emoji emoji-id="5040042498634810056">❌</tg-emoji>\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>${reason}</b>\n\n` +
-    `<tg-emoji emoji-id="5040036030414062506">💬</tg-emoji> <b>ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc</b>`;
+  let declineMsg;
+  if (buyBeforePayment) {
+    declineMsg =
+      `<tg-emoji emoji-id="5434095036394387314">🫡</tg-emoji> <b>ይቅርታ፣ የ USDT ግዢ ጥያቄዎ በአድሚን ውድቅ ተደርጓል!</b>\n\n` +
+      `<tg-emoji emoji-id="4956475826762679249">💬</tg-emoji> <b>ለተጨማሪ መረጃ @Aropc ያነጋግሩ።</b>`;
+  } else {
+    declineMsg =
+      `<tg-emoji emoji-id="5039671744172917707">🚫</tg-emoji> <b>ትዕዛዝዎ ውድቅ ተደርጓል!</b> <tg-emoji emoji-id="5040042498634810056">❌</tg-emoji>\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>የላኩት የክፍያ ደረሰኝ (Screenshot) ትክክል ስላልሆነ በ Admin ውድቅ ተደርጓል።</b>\n\n` +
+      `<tg-emoji emoji-id="5040036030414062506">💬</tg-emoji> <b>ለተጨማሪ መረጃ ወይም ቅሬታ ካለዎት Admin ያነጋግሩ፦ @Aropc</b>`;
+  }
 
   try {
     await tg("sendMessage", {
